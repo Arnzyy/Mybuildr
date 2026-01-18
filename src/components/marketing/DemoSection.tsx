@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Globe, Settings, Instagram } from 'lucide-react'
+import { Globe, Settings, Instagram, Upload, Image, Calendar, Heart, MessageCircle, Send, Bookmark, MoreHorizontal } from 'lucide-react'
 
 const tabs = [
   {
@@ -65,52 +65,112 @@ export default function DemoSection() {
             </div>
 
             {/* Content */}
-            <div className="aspect-video bg-gray-100 relative">
+            <div className="aspect-video bg-gray-100 relative overflow-hidden">
+              {/* Website Tab - Live iframe */}
               {activeTab === 'website' && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 text-white">
-                  <div className="text-center">
-                    <Globe className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <p className="text-xl font-medium">Live Client Website</p>
-                    <p className="text-gray-400">Professional mobile-first design</p>
-                    <p className="text-sm text-gray-500 mt-4">Add your demo URL here</p>
-                  </div>
-                </div>
+                <iframe
+                  src="https://www.daxamanagement.com"
+                  className="absolute inset-0 w-full h-full border-none"
+                  title="DAXA Management - Live Client Website"
+                />
               )}
 
+              {/* Admin Panel Tab - Proper mockup */}
               {activeTab === 'admin' && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-900 text-white p-8">
-                  <div className="text-center max-w-md">
-                    <Settings className="w-16 h-16 mx-auto mb-4 text-orange-500" />
-                    <h3 className="text-xl font-bold mb-2">Dead Simple Admin Panel</h3>
-                    <p className="text-gray-400 mb-4">
-                      Drag & drop your photos. Add a title. Done.
-                      <br />We handle the rest.
-                    </p>
-                    <div className="bg-gray-800 rounded-lg p-4 text-left text-sm">
-                      <p className="text-green-400">✓ Upload photos</p>
-                      <p className="text-green-400">✓ Edit your info</p>
-                      <p className="text-green-400">✓ See scheduled posts</p>
-                      <p className="text-gray-500">No tech skills needed</p>
+                <div className="absolute inset-0 bg-gray-100 flex">
+                  {/* Sidebar */}
+                  <div className="w-48 bg-gray-900 text-white p-4 hidden sm:block">
+                    <div className="flex items-center gap-2 mb-8">
+                      <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center font-bold text-sm">TS</div>
+                      <span className="font-semibold text-sm">Trade Sites</span>
+                    </div>
+                    <nav className="space-y-1">
+                      <div className="flex items-center gap-2 px-3 py-2 bg-gray-800 rounded-lg text-sm">
+                        <Image className="w-4 h-4" />
+                        <span>Photos</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-3 py-2 text-gray-400 hover:bg-gray-800 rounded-lg text-sm">
+                        <Calendar className="w-4 h-4" />
+                        <span>Scheduled</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-3 py-2 text-gray-400 hover:bg-gray-800 rounded-lg text-sm">
+                        <Settings className="w-4 h-4" />
+                        <span>Settings</span>
+                      </div>
+                    </nav>
+                  </div>
+
+                  {/* Main Content */}
+                  <div className="flex-1 p-4 sm:p-6 overflow-hidden">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-bold text-gray-900">Upload Photos</h3>
+                      <span className="text-xs text-gray-500 bg-green-100 text-green-700 px-2 py-1 rounded-full">3 scheduled this week</span>
+                    </div>
+
+                    {/* Upload Zone */}
+                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 sm:p-8 text-center bg-white mb-4 hover:border-orange-400 transition-colors cursor-pointer">
+                      <Upload className="w-10 h-10 mx-auto mb-3 text-gray-400" />
+                      <p className="text-sm font-medium text-gray-700">Drop photos here or click to upload</p>
+                      <p className="text-xs text-gray-500 mt-1">We&apos;ll write the captions and post for you</p>
+                    </div>
+
+                    {/* Recent Uploads */}
+                    <p className="text-xs font-medium text-gray-500 mb-2">RECENT UPLOADS</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="aspect-square bg-gray-300 rounded-lg relative overflow-hidden">
+                          <div className="absolute inset-0 bg-gradient-to-br from-gray-400 to-gray-500" />
+                          <div className="absolute bottom-1 right-1 bg-green-500 text-white text-[10px] px-1 rounded">Posted</div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
               )}
 
+              {/* Instagram Tab - Proper feed mockup */}
               {activeTab === 'instagram' && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-600 to-pink-500 text-white p-8">
-                  <div className="text-center max-w-md">
-                    <Instagram className="w-16 h-16 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold mb-2">Posted Automatically</h3>
-                    <p className="text-white/80 mb-4">
-                      5 posts per week to Instagram, Facebook, and Google.
-                      <br />You don&apos;t log in. Ever.
-                    </p>
-                    <div className="bg-white/10 rounded-lg p-4 text-left text-sm">
-                      <p>📸 Posted 2 days ago</p>
-                      <p>📸 Posted 4 days ago</p>
-                      <p>📸 Posted 6 days ago</p>
-                      <p className="text-white/60 mt-2">All while you were on site...</p>
+                <div className="absolute inset-0 bg-white flex flex-col">
+                  {/* Instagram Header */}
+                  <div className="flex items-center justify-between px-4 py-3 border-b">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white text-xs font-bold">DM</div>
+                      <div>
+                        <p className="text-sm font-semibold">daxa_management</p>
+                        <p className="text-xs text-gray-500">Bristol, UK</p>
+                      </div>
                     </div>
+                    <MoreHorizontal className="w-5 h-5 text-gray-600" />
+                  </div>
+
+                  {/* Post Image */}
+                  <div className="flex-1 bg-gradient-to-br from-gray-700 to-gray-800 relative">
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center text-white/60">
+                        <div className="w-16 h-16 border-2 border-white/30 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                          <Image className="w-8 h-8" />
+                        </div>
+                        <p className="text-sm">Kitchen renovation complete</p>
+                      </div>
+                    </div>
+                    <div className="absolute top-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                      1/4
+                    </div>
+                  </div>
+
+                  {/* Post Actions */}
+                  <div className="px-4 py-3 border-t bg-white">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-4">
+                        <Heart className="w-6 h-6 text-red-500 fill-red-500" />
+                        <MessageCircle className="w-6 h-6 text-gray-700" />
+                        <Send className="w-6 h-6 text-gray-700" />
+                      </div>
+                      <Bookmark className="w-6 h-6 text-gray-700" />
+                    </div>
+                    <p className="text-sm font-semibold">47 likes</p>
+                    <p className="text-sm"><span className="font-semibold">daxa_management</span> Another stunning kitchen transformation in Clifton. Shaker style cabinets with...</p>
+                    <p className="text-xs text-gray-500 mt-1">Posted 2 hours ago <span className="text-green-600">• Auto-posted by Trade Sites</span></p>
                   </div>
                 </div>
               )}
@@ -119,7 +179,7 @@ export default function DemoSection() {
             {/* Footer */}
             <div className="px-6 py-4 bg-orange-50 border-t border-orange-100">
               <p className="text-sm text-orange-900">
-                💡 <strong>This is a real client.</strong> Dave from DAXA Construction hasn&apos;t logged into Instagram in months. His feed is still active.
+                <strong>This is a real client.</strong> Dave from DAXA Management hasn&apos;t logged into Instagram in months. His feed is still active.
               </p>
             </div>
           </div>
