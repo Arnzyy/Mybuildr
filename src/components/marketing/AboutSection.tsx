@@ -1,11 +1,11 @@
-"use client";
+'use client'
 
-import { COPY } from "@/lib/constants";
+import { COPY } from '@/lib/constants'
 
 export default function AboutSection() {
   return (
-    <section className="bg-gray-50 py-16 md:py-24 px-4" id="about">
-      <div className="max-w-6xl mx-auto px-4">
+    <section className="bg-gray-50 py-16 md:py-24" id="about">
+      <div className="section-container">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
             {COPY.about.headline}
@@ -16,5 +16,5 @@ export default function AboutSection() {
         </div>
       </div>
     </section>
-  );
+  )
 }
