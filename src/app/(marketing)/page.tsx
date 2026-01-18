@@ -1,13 +1,14 @@
 import Hero from '@/components/marketing/Hero'
 import TrustBar from '@/components/marketing/TrustBar'
 import ProblemSection from '@/components/marketing/ProblemSection'
-import HowItWorks from '@/components/marketing/HowItWorks'
-import InteractiveDemo from '@/components/marketing/InteractiveDemo'
+import SolutionSection from '@/components/marketing/SolutionSection'
+import WhoWeHelp from '@/components/marketing/WhoWeHelp'
+import DemoSection from '@/components/marketing/DemoSection'
+import StatsBar from '@/components/marketing/StatsBar'
+import Testimonials from '@/components/marketing/Testimonials'
 import PricingSection from '@/components/marketing/PricingSection'
-import TestimonialSection from '@/components/marketing/TestimonialSection'
 import FAQSection from '@/components/marketing/FAQSection'
-import AboutSection from '@/components/marketing/AboutSection'
-import FooterCTA from '@/components/marketing/FooterCTA'
+import FinalCTA from '@/components/marketing/FinalCTA'
 
 export default function HomePage() {
   return (
@@ -15,13 +16,14 @@ export default function HomePage() {
       <TrustBar />
       <Hero />
       <ProblemSection />
-      <HowItWorks />
-      <InteractiveDemo />
+      <SolutionSection />
+      <WhoWeHelp />
+      <DemoSection />
+      <StatsBar />
       <PricingSection />
-      <TestimonialSection />
+      <Testimonials />
       <FAQSection />
-      <AboutSection />
-      <FooterCTA />
+      <FinalCTA />
     </>
   )
 }

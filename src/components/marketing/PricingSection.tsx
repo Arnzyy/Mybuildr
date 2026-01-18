@@ -1,100 +1,88 @@
-'use client'
-
-import { PRICING, COPY, SITE_CONFIG } from '@/lib/constants'
+import { Check, X } from 'lucide-react'
+import { PRICING } from '@/lib/constants'
 
 export default function PricingSection() {
   const tiers = [PRICING.starter, PRICING.pro, PRICING.full]
 
   return (
-    <section className="py-16 md:py-24" id="pricing">
+    <section id="pricing" className="py-16 md:py-24 bg-gray-50">
       <div className="section-container">
-        <div className="max-w-2xl mx-auto text-center mb-12 md:mb-16">
+        {/* Headline */}
+        <div className="max-w-3xl mx-auto text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            {COPY.pricing.headline}
+            Simple pricing. Pick what you need.
           </h2>
-          <p className="text-lg text-gray-600">{COPY.pricing.subheading}</p>
+          <p className="text-lg text-gray-600">
+            All plans include hosting, SSL, and support. Cancel anytime.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto items-start">
+        {/* Pricing Cards */}
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
           {tiers.map((tier) => (
             <div
               key={tier.id}
-              className={`relative rounded-lg border transition-all ${
+              className={`relative bg-white rounded-xl overflow-hidden ${
                 tier.highlighted
-                  ? 'border-orange-400 bg-gradient-to-br from-orange-50 to-white shadow-lg md:scale-105'
-                  : 'border-gray-200 bg-white'
+                  ? 'border-2 border-orange-500 shadow-xl'
+                  : 'border border-gray-200'
               }`}
             >
+              {/* Popular badge */}
               {tier.highlighted && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-orange-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                  Most Popular
+                <div className="absolute top-0 right-0 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                  MOST POPULAR
                 </div>
               )}
 
-              <div className="p-6 md:p-8">
-                <div className="mb-6">
-                  <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">{tier.name}</h3>
-                  <p className="text-sm text-gray-600">{tier.description}</p>
+              <div className="p-8">
+                {/* Header */}
+                <h3 className="text-xl font-bold text-gray-900">{tier.name}</h3>
+                <p className="text-sm text-gray-600 mt-1">{tier.description}</p>
+
+                {/* Price */}
+                <div className="mt-6 mb-6">
+                  <span className="text-4xl font-bold text-gray-900">£{tier.price}</span>
+                  <span className="text-gray-600">/month</span>
                 </div>
 
-                <div className="mb-6">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-4xl md:text-5xl font-bold text-gray-900">£{tier.price}</span>
-                    <span className="text-gray-600">/month</span>
-                  </div>
-                  <p className="text-sm text-gray-500 mt-2">Billed monthly. Cancel anytime.</p>
-                </div>
-
+                {/* CTA */}
                 <a
-                  href={`mailto:${SITE_CONFIG.email}?subject=Interest in ${tier.name} Plan`}
-                  className={`w-full block text-center py-3 rounded-lg font-semibold mb-6 transition-colors ${
+                  href={`mailto:hello@trade-sites.co.uk?subject=Interested in ${tier.name} plan`}
+                  className={`block w-full text-center py-3 rounded-lg font-semibold transition-colors ${
                     tier.highlighted
                       ? 'bg-orange-500 text-white hover:bg-orange-600'
                       : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
                   }`}
                 >
-                  {tier.cta}
+                  Get Started →
                 </a>
 
-                <div className="space-y-3 mb-6">
-                  {tier.features.map((feature, index) => (
-                    <div key={index} className="flex gap-3">
-                      <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      <p className="text-sm text-gray-700">{feature}</p>
-                    </div>
+                {/* Features */}
+                <ul className="mt-6 space-y-3">
+                  {tier.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-3">
+                      <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-gray-700">{feature}</span>
+                    </li>
                   ))}
-                </div>
-
-                {tier.notIncluded.length > 0 && (
-                  <div className="border-t pt-4">
-                    <p className="text-xs font-semibold text-gray-600 uppercase mb-3">Not included</p>
-                    <div className="space-y-2">
-                      {tier.notIncluded.map((item, index) => (
-                        <div key={index} className="flex gap-3">
-                          <svg className="w-4 h-4 text-gray-300 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                          <p className="text-sm text-gray-500">{item}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                  {tier.notIncluded.map((feature) => (
+                    <li key={feature} className="flex items-start gap-3">
+                      <X className="w-5 h-5 text-gray-300 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-gray-400">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="text-center mt-12">
-          <p className="text-gray-600">
-            Have questions?{' '}
-            <a href="#faq" className="text-orange-500 font-semibold hover:underline">
-              Check our FAQ
-            </a>
-          </p>
-        </div>
+        {/* Bottom note */}
+        <p className="text-center text-gray-500 mt-8">
+          Questions? <a href="#faq" className="text-orange-500 font-medium hover:underline">Check our FAQ</a> or{' '}
+          <a href="mailto:hello@trade-sites.co.uk" className="text-orange-500 font-medium hover:underline">email us</a>
+        </p>
       </div>
     </section>
   )
