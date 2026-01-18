@@ -8,8 +8,8 @@ export default function Footer() {
           <div>
             <h3 className="font-bold text-lg mb-4">{SITE_CONFIG.name}</h3>
             <p className="text-gray-400 text-sm">
-              We specialise in websites for construction companies, builders,
-              and tradesmen across the UK.
+              Websites and social media for builders who&apos;d rather be on
+              site than online. We handle the tech, you handle the tools.
             </p>
           </div>
           <div>

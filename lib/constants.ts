@@ -5,14 +5,14 @@ export const SITE_CONFIG = {
 
 export const COPY = {
   hero: {
-    headline: "We specialise in websites for construction companies.",
-    subheading: "Professional websites + automated social media posting for builders, tradesmen, and construction businesses. From £99/month.",
+    headline: "Websites for builders, by people who get it.",
+    subheading: "We know you'd rather be on site than messing about with websites and social media. That's why we handle everything - professional website, automatic social posts, zero hassle. From £99/month.",
     cta: "Email us for a demo",
   },
   problem: {
-    headline: "Your competitor posts 5x a week. You're not online at all.",
+    headline: "Your competitor posts 5x a week. You're too busy actually working.",
     description:
-      "Construction companies without a strong online presence lose jobs to those who have one. We build websites specifically for the construction industry.",
+      "We get it. You're grafting all day, last thing you want to do is figure out Instagram. But customers check you out online before they call. If you're not there, you're losing work to the bloke down the road who is.",
   },
   howItWorks: {
     headline: "How it works in 3 simple steps",
@@ -59,14 +59,14 @@ export const COPY = {
     ],
   },
   pricing: {
-    headline: "Simple pricing for construction businesses.",
-    subheading: "All plans include hosting and support. Built specifically for builders. Cancel anytime.",
+    headline: "Straight-up pricing. No nonsense.",
+    subheading: "Everything included. No hidden fees. No contracts. Cancel anytime.",
     perMonth: "per month",
     notIncluded: "Not included",
   },
   testimonial: {
-    headline: "Trusted by construction companies",
-    description: "See what other builders are saying",
+    headline: "Don't take our word for it",
+    description: "Here's what other builders are saying",
   },
   faq: {
     headline: "Frequently asked questions",
@@ -99,13 +99,13 @@ export const COPY = {
     ],
   },
   about: {
-    headline: "Built for builders",
+    headline: "For builders, by builders",
     description:
-      "We specialise exclusively in websites for construction companies. Builders, roofers, plasterers, electricians, plumbers - if you work in construction, we've got you covered. We understand the industry and what your customers are looking for.",
+      "We've been in your boots. We know what it's like trying to run a business, manage jobs, deal with customers - and somehow find time to post on social media and keep a website updated. It's a nightmare. That's exactly why we built this. No tech jargon, no complicated dashboards, just a professional online presence that works while you work.",
   },
   footerCta: {
-    headline: "Ready to get your construction business online?",
-    description: "Join other builders already winning more work with a professional website.",
+    headline: "Stop losing jobs to competitors with better websites.",
+    description: "Get online properly. Takes 5 minutes to get started, live within a week.",
     cta: "Email Us",
   },
 };
