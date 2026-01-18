@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+/* Custom color variables */
+:root {
+  --color-mint: #10b981;
+  --color-blue-primary: #3b82f6;
+  --color-gray-light: #f9fafb;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+}
+
+/* Button base styles */
+@layer components {
+  .btn-primary {
+    @apply px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 bg-gray-100 text-gray-900 rounded-lg font-semibold hover:bg-gray-200 transition-colors;
+  }
+
+  .section-container {
+    @apply max-w-6xl mx-auto px-4;
+  }
+
+  .section-padding {
+    @apply py-16 md:py-24;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent;
+  }
+}
+
+/* Responsive spacing */
+@media (max-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
