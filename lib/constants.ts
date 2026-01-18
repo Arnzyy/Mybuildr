@@ -5,14 +5,14 @@ export const SITE_CONFIG = {
 
 export const COPY = {
   hero: {
-    headline: "Professional websites + automated social media. £99-199/month.",
-    subheading: "Stop losing customers because you're not online.",
+    headline: "We specialise in websites for construction companies.",
+    subheading: "Professional websites + automated social media posting for builders, tradesmen, and construction businesses. From £99/month.",
     cta: "Email us for a demo",
   },
   problem: {
     headline: "Your competitor posts 5x a week. You're not online at all.",
     description:
-      "Builders without a strong online presence lose customers to those who have one. We solve that.",
+      "Construction companies without a strong online presence lose jobs to those who have one. We build websites specifically for the construction industry.",
   },
   howItWorks: {
     headline: "How it works in 3 simple steps",
@@ -59,14 +59,14 @@ export const COPY = {
     ],
   },
   pricing: {
-    headline: "Simple pricing. No hidden fees.",
-    subheading: "All plans include hosting and support. Cancel anytime.",
+    headline: "Simple pricing for construction businesses.",
+    subheading: "All plans include hosting and support. Built specifically for builders. Cancel anytime.",
     perMonth: "per month",
     notIncluded: "Not included",
   },
   testimonial: {
-    headline: "Loved by builders",
-    description: "See what our clients are saying",
+    headline: "Trusted by construction companies",
+    description: "See what other builders are saying",
   },
   faq: {
     headline: "Frequently asked questions",
@@ -99,13 +99,13 @@ export const COPY = {
     ],
   },
   about: {
-    headline: "About us",
+    headline: "Built for builders",
     description:
-      "We build websites for construction companies because we understand the business. We run businesses ourselves, and we get it. No fluff, just results.",
+      "We specialise exclusively in websites for construction companies. Builders, roofers, plasterers, electricians, plumbers - if you work in construction, we've got you covered. We understand the industry and what your customers are looking for.",
   },
   footerCta: {
-    headline: "Ready to get your business online?",
-    description: "Email us today and we'll get you set up.",
+    headline: "Ready to get your construction business online?",
+    description: "Join other builders already winning more work with a professional website.",
     cta: "Email Us",
   },
 };

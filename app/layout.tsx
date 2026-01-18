@@ -3,13 +3,13 @@ import "./globals.css";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Professional Websites + Automated Social Media for Construction",
+  title: "Construction Company Websites | Specialists in Builder Websites UK",
   description:
-    "Website design and automated social media posting for construction companies. £99-199/month.",
+    "We specialise in websites for construction companies, builders, and tradesmen. Professional websites + automated social media posting from £99/month.",
   openGraph: {
-    title: "Professional Websites for Construction Companies",
+    title: "Construction Company Websites | BuilderSites",
     description:
-      "Professional websites + automated social media posting for construction companies. £99-199/month.",
+      "We specialise in websites for construction companies, builders, and tradesmen. From £99/month.",
     type: "website",
   },
 };
