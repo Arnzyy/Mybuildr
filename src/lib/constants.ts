@@ -70,7 +70,7 @@ export const STATS = {
 }
 
 export const TRUST_SIGNALS = [
-  '★★★★★ 4.9 on Checkatrade',
+  '★★★★★ 5 on Trustpilot',
   'Live in 7 days',
   'No contracts',
 ]
