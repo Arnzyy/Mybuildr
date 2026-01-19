@@ -1,9 +1,45 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
 
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl
   const hostname = request.headers.get('host') || ''
+
+  // Create response to modify
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  })
+
+  // Create Supabase client for auth check
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options)
+          })
+        },
+      },
+    }
+  )
+
+  // Check auth for admin routes
+  if (url.pathname.startsWith('/admin')) {
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      // Redirect to login
+      return NextResponse.redirect(new URL('/login?redirect=/admin', request.url))
+    }
+  }
 
   // Main domain - serve marketing site
   const isMainDomain =
@@ -13,7 +49,7 @@ export async function middleware(request: NextRequest) {
     hostname.includes('vercel.app')
 
   if (isMainDomain) {
-    return NextResponse.next()
+    return response
   }
 
   // Check for subdomain (e.g., daxa-construction.bytrade.co.uk)
@@ -24,12 +60,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Custom domain - look up in database
-  // Note: This requires edge-compatible Supabase setup
-  // For now, we'll handle this in the page itself
-  // and just pass through
-
-  return NextResponse.next()
+  return response
 }
 
 export const config = {

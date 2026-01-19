@@ -81,3 +81,33 @@ export async function submitEnquiry(
 
   return { error }
 }
+
+// Get company for authenticated user (by email)
+export async function getCompanyForUser(email: string): Promise<Company | null> {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('companies')
+    .select('*')
+    .eq('email', email)
+    .eq('is_active', true)
+    .single()
+
+  if (error || !data) return null
+  return data as Company
+}
+
+// Update company
+export async function updateCompany(
+  companyId: string,
+  updates: Partial<Company>
+): Promise<{ error: unknown }> {
+  const supabase = createAdminClient()
+
+  const { error } = await supabase
+    .from('companies')
+    .update(updates)
+    .eq('id', companyId)
+
+  return { error }
+}
