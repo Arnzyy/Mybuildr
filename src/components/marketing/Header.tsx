@@ -35,7 +35,7 @@ export default function Header() {
             <a href="#faq" className="text-sm text-gray-600 hover:text-gray-900">
               FAQ
             </a>
-            <a href="#pricing" className="btn-primary text-sm">
+            <a href="/get-started" className="btn-primary text-sm">
               Get Your Site
             </a>
           </nav>
@@ -65,7 +65,7 @@ export default function Header() {
               <a href="#faq" className="text-gray-600 hover:text-gray-900">
                 FAQ
               </a>
-              <a href="#pricing" className="btn-primary text-center">
+              <a href="/get-started" className="btn-primary text-center">
                 Get Your Site
               </a>
             </div>

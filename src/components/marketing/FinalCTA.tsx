@@ -14,7 +14,7 @@ export default function FinalCTA() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="#pricing"
+              href="/get-started"
               className="btn-primary text-lg px-8 py-4"
             >
               Get Your Site →

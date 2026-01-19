@@ -28,7 +28,7 @@ export default function Footer() {
             <h4 className="font-semibold mb-4">Support</h4>
             <ul className="space-y-2 text-sm text-gray-400">
               <li><a href="#faq" className="hover:text-white">FAQ</a></li>
-              <li><a href={`mailto:${SITE_CONFIG.email}`} className="hover:text-white">Contact</a></li>
+              <li><a href="/get-started" className="hover:text-white">Contact</a></li>
             </ul>
           </div>
 
@@ -36,7 +36,7 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold mb-4">Get Started</h4>
             <a
-              href="#pricing"
+              href="/get-started"
               className="inline-block bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded text-sm font-medium"
             >
               Get Your Site →

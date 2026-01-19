@@ -48,7 +48,7 @@ export default function PricingSection() {
 
                 {/* CTA */}
                 <a
-                  href={`mailto:hello@trade-sites.co.uk?subject=Interested in ${tier.name} plan`}
+                  href={`/get-started?package=${tier.id}`}
                   className={`block w-full text-center py-3 rounded-lg font-semibold transition-colors ${
                     tier.highlighted
                       ? 'bg-orange-500 text-white hover:bg-orange-600'
@@ -81,7 +81,7 @@ export default function PricingSection() {
         {/* Bottom note */}
         <p className="text-center text-gray-500 mt-8">
           Questions? <a href="#faq" className="text-orange-500 font-medium hover:underline">Check our FAQ</a> or{' '}
-          <a href="mailto:hello@trade-sites.co.uk" className="text-orange-500 font-medium hover:underline">email us</a>
+          <a href="/get-started" className="text-orange-500 font-medium hover:underline">get in touch</a>
         </p>
       </div>
     </section>

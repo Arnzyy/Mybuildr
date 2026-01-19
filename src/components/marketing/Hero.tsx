@@ -38,7 +38,7 @@ export default function Hero() {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-            <Link href="#pricing" className="btn-primary text-lg px-8 py-4">
+            <Link href="/get-started" className="btn-primary text-lg px-8 py-4">
               {COPY.hero.cta}
             </Link>
             <a
