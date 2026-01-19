@@ -60,7 +60,7 @@ export default function SolutionSection() {
           <p className="text-gray-400">
             Time to create manually: <span className="line-through">100+ hours</span>
             <br />
-            Time with Trade Sites: <span className="text-green-400 font-bold">0 hours</span>
+            Time with trade.: <span className="text-green-400 font-bold">0 hours</span>
           </p>
         </div>
       </div>

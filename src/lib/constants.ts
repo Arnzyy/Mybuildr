@@ -1,5 +1,5 @@
 export const SITE_CONFIG = {
-  name: 'Trade Sites',
+  name: 'trade.',
   domain: 'trade-sites.co.uk',
   tagline: 'Websites for builders. That actually work.',
   email: 'hello@trade-sites.co.uk',
