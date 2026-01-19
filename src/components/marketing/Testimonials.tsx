@@ -3,8 +3,8 @@ import { Star } from 'lucide-react'
 const testimonials = [
   {
     quote: "I used to stress about Instagram. Now I just take photos and forget about it. Three months in and I've had to put my prices up because I've got too much work.",
-    name: 'Dave',
-    company: 'DAXA Construction',
+    name: 'Connor',
+    company: 'DAXA Management',
     location: 'Bristol',
   },
   {
