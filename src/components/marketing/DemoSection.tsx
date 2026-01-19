@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Globe, Settings, Camera, Upload, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Check, Clock } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Globe, Settings, Camera, Upload, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Check, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const tabs = [
   { id: 'website', label: 'Website', icon: Globe },
@@ -9,8 +9,57 @@ const tabs = [
   { id: 'instagram', label: 'Instagram', icon: Camera },
 ]
 
+const demoImages = [
+  { src: '/images/kitchen-demo.jpg', label: 'Kitchen' },
+  { src: '/images/demo-1.webp', label: 'Extension' },
+  { src: '/images/demo-2.jpg', label: 'Renovation' },
+  { src: '/images/demo-3.jpg', label: 'Bathroom' },
+]
+
+const instagramPosts = [
+  {
+    image: '/images/kitchen-demo.jpg',
+    caption: 'Bespoke handmade in-frame shaker kitchen. Solid oak internals, soft-close everything. Another happy client in Clifton.',
+    likes: 47,
+    time: '2 hours ago',
+  },
+  {
+    image: '/images/demo-1.webp',
+    caption: 'Extension complete in Redland. Extra 40sqm of living space, bi-fold doors out to the garden. The clients are over the moon.',
+    likes: 62,
+    time: '2 days ago',
+  },
+  {
+    image: '/images/demo-2.jpg',
+    caption: 'Full house renovation wrapped up this week. New kitchen, bathrooms, rewire, replumb. Transformed this 1930s semi.',
+    likes: 89,
+    time: '4 days ago',
+  },
+  {
+    image: '/images/demo-3.jpg',
+    caption: 'Bathroom refit in Bishopston. Walk-in shower, heated floors, new everything. Done and dusted in 2 weeks.',
+    likes: 34,
+    time: '1 week ago',
+  },
+]
+
 export default function DemoSection() {
   const [activeTab, setActiveTab] = useState('website')
+  const [currentPost, setCurrentPost] = useState(0)
+
+  // Auto-scroll Instagram posts
+  useEffect(() => {
+    if (activeTab !== 'instagram') return
+
+    const interval = setInterval(() => {
+      setCurrentPost((prev) => (prev + 1) % instagramPosts.length)
+    }, 4000)
+
+    return () => clearInterval(interval)
+  }, [activeTab])
+
+  const nextPost = () => setCurrentPost((prev) => (prev + 1) % instagramPosts.length)
+  const prevPost = () => setCurrentPost((prev) => (prev - 1 + instagramPosts.length) % instagramPosts.length)
 
   return (
     <section id="demo" className="py-16 md:py-24 bg-gray-50">
@@ -106,13 +155,13 @@ export default function DemoSection() {
                   <p className="text-xs text-gray-500">All auto-posted</p>
                 </div>
                 <div className="grid grid-cols-4 gap-3">
-                  {['Kitchen refit', 'Bathroom', 'Extension', 'Loft'].map((label, i) => (
+                  {demoImages.map((img, i) => (
                     <div key={i} className="relative group">
-                      <div className="aspect-square bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl overflow-hidden">
+                      <div className="aspect-square rounded-xl overflow-hidden">
                         <img
-                          src="/images/kitchen-demo.jpg"
-                          alt={label}
-                          className="w-full h-full object-cover opacity-80"
+                          src={img.src}
+                          alt={img.label}
+                          className="w-full h-full object-cover"
                         />
                       </div>
                       <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center">
@@ -120,13 +169,14 @@ export default function DemoSection() {
                           <Check className="w-4 h-4 text-white" />
                         </div>
                       </div>
+                      <p className="absolute bottom-1 left-1 right-1 text-[10px] text-white font-medium truncate bg-black/50 rounded px-1">{img.label}</p>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Instagram Tab */}
+            {/* Instagram Tab - Auto-scrolling posts */}
             {activeTab === 'instagram' && (
               <div className="flex flex-col">
                 {/* Instagram Header */}
@@ -141,15 +191,45 @@ export default function DemoSection() {
                   <MoreHorizontal className="w-5 h-5 text-gray-400" />
                 </div>
 
-                {/* Post Image */}
-                <div className="aspect-square md:aspect-[4/3] relative">
+                {/* Post Image with navigation */}
+                <div className="aspect-square md:aspect-[4/3] relative group">
                   <img
-                    src="/images/kitchen-demo.jpg"
-                    alt="Bespoke kitchen renovation"
-                    className="w-full h-full object-cover"
+                    src={instagramPosts[currentPost].image}
+                    alt="Instagram post"
+                    className="w-full h-full object-cover transition-opacity duration-500"
                   />
-                  <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-full font-medium">
-                    1/4
+
+                  {/* Navigation arrows */}
+                  <button
+                    onClick={prevPost}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-gray-700" />
+                  </button>
+                  <button
+                    onClick={nextPost}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                  >
+                    <ChevronRight className="w-5 h-5 text-gray-700" />
+                  </button>
+
+                  {/* Post indicator dots */}
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                    {instagramPosts.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentPost(i)}
+                        className={`w-1.5 h-1.5 rounded-full transition-all ${
+                          i === currentPost ? 'bg-white w-4' : 'bg-white/50'
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Auto-post badge */}
+                  <div className="absolute top-3 right-3 bg-green-500 text-white text-xs px-2.5 py-1 rounded-full font-medium flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                    Auto-posted
                   </div>
                 </div>
 
@@ -163,14 +243,14 @@ export default function DemoSection() {
                     </div>
                     <Bookmark className="w-7 h-7 text-gray-700" />
                   </div>
-                  <p className="text-sm font-bold text-gray-900 mb-1">47 likes</p>
+                  <p className="text-sm font-bold text-gray-900 mb-1">{instagramPosts[currentPost].likes} likes</p>
                   <p className="text-sm text-gray-700">
                     <span className="font-bold">daxa_management</span>{' '}
-                    Bespoke handmade in-frame shaker kitchen. Solid oak internals, soft-close everything...
+                    {instagramPosts[currentPost].caption}
                   </p>
                   <div className="flex items-center gap-2 mt-2">
-                    <p className="text-xs text-gray-400">2 hours ago</p>
-                    <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded-full">Auto-posted by bytrade</span>
+                    <p className="text-xs text-gray-400">{instagramPosts[currentPost].time}</p>
+                    <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded-full">bytrade</span>
                   </div>
                 </div>
               </div>
