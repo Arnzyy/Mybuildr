@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { SITE_CONFIG, PRICING } from '@/lib/constants'
@@ -12,7 +12,7 @@ const packageLabels: Record<string, string> = {
   full: `Full Package - £${PRICING.full.price}/month`,
 }
 
-export default function GetStartedPage() {
+function GetStartedForm() {
   const searchParams = useSearchParams()
   const packageParam = searchParams.get('package')
 
@@ -243,5 +243,42 @@ Message: ${formData.message || 'None'}
         </div>
       </div>
     </div>
+  )
+}
+
+function FormLoading() {
+  return (
+    <div className="py-16 md:py-24">
+      <div className="section-container">
+        <div className="max-w-2xl mx-auto">
+          <div className="animate-pulse">
+            <div className="h-6 w-32 bg-gray-200 rounded mb-8" />
+            <div className="text-center mb-12">
+              <div className="h-10 w-64 bg-gray-200 rounded mx-auto mb-4" />
+              <div className="h-6 w-96 bg-gray-200 rounded mx-auto" />
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8">
+              <div className="space-y-6">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i}>
+                    <div className="h-4 w-24 bg-gray-200 rounded mb-2" />
+                    <div className="h-12 bg-gray-200 rounded-xl" />
+                  </div>
+                ))}
+                <div className="h-14 bg-gray-300 rounded-lg" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function GetStartedPage() {
+  return (
+    <Suspense fallback={<FormLoading />}>
+      <GetStartedForm />
+    </Suspense>
   )
 }
