@@ -1,20 +1,47 @@
 'use client'
 
 import { useState, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { SITE_CONFIG } from '@/lib/constants'
 
 function LoginForm() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const redirect = searchParams.get('redirect') || '/admin'
 
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
+  const [mode, setMode] = useState<'password' | 'magic'>('password')
+  const [magicSent, setMagicSent] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handlePasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) {
+        setError(error.message)
+      } else {
+        router.push(redirect)
+      }
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
@@ -31,7 +58,7 @@ function LoginForm() {
       if (error) {
         setError(error.message)
       } else {
-        setSent(true)
+        setMagicSent(true)
       }
     } catch {
       setError('Something went wrong. Please try again.')
@@ -51,7 +78,7 @@ function LoginForm() {
 
         {/* Card */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-          {sent ? (
+          {magicSent ? (
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -66,20 +93,76 @@ function LoginForm() {
                 Click the link in your email to sign in. The link expires in 1 hour.
               </p>
               <button
-                onClick={() => setSent(false)}
+                onClick={() => setMagicSent(false)}
                 className="mt-6 text-sm text-orange-600 hover:underline"
               >
-                Use a different email
+                Try again
               </button>
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
+          ) : mode === 'password' ? (
+            <form onSubmit={handlePasswordLogin} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Email address
                 </label>
                 <input
                   type="email"
+                  name="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="you@company.com"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+              </div>
+
+              {error && (
+                <p className="text-sm text-red-600">{error}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Signing in...' : 'Sign In'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMode('magic')}
+                className="w-full text-sm text-gray-500 hover:text-gray-700"
+              >
+                Sign in with magic link instead
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleMagicLink} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email address
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -100,9 +183,13 @@ function LoginForm() {
                 {loading ? 'Sending...' : 'Send Magic Link'}
               </button>
 
-              <p className="text-xs text-gray-500 text-center">
-                No password needed. We&apos;ll send you a secure link.
-              </p>
+              <button
+                type="button"
+                onClick={() => setMode('password')}
+                className="w-full text-sm text-gray-500 hover:text-gray-700"
+              >
+                Sign in with password instead
+              </button>
             </form>
           )}
         </div>
