@@ -30,6 +30,7 @@ export default function SettingsForm({ company }: SettingsFormProps) {
     template: company.template,
     primary_color: company.primary_color,
     secondary_color: company.secondary_color,
+    posts_per_week: company.posts_per_week || 5,
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -54,6 +55,7 @@ export default function SettingsForm({ company }: SettingsFormProps) {
             ...formData,
             services: formData.services.split(',').map(s => s.trim()).filter(Boolean),
             areas_covered: formData.areas_covered.split(',').map(s => s.trim()).filter(Boolean),
+            posts_per_week: Number(formData.posts_per_week),
           }
         }),
       })
@@ -73,7 +75,7 @@ export default function SettingsForm({ company }: SettingsFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* Business Info */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
         <h2 className="font-semibold text-gray-900 mb-6">Business Information</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -149,7 +151,7 @@ export default function SettingsForm({ company }: SettingsFormProps) {
       </div>
 
       {/* Contact Info */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
         <h2 className="font-semibold text-gray-900 mb-6">Contact Information</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -224,7 +226,7 @@ export default function SettingsForm({ company }: SettingsFormProps) {
       </div>
 
       {/* Social Links */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
         <h2 className="font-semibold text-gray-900 mb-6">Social & Reviews</h2>
 
         <div className="grid grid-cols-1 gap-6">
@@ -272,11 +274,35 @@ export default function SettingsForm({ company }: SettingsFormProps) {
         </div>
       </div>
 
+      {/* Posting Settings */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+        <h2 className="font-semibold text-gray-900 mb-6">Posting Settings</h2>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Posts per week
+          </label>
+          <select
+            name="posts_per_week"
+            value={formData.posts_per_week}
+            onChange={handleChange}
+            className="w-full sm:w-48 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          >
+            <option value={3}>3 posts per week</option>
+            <option value={5}>5 posts per week</option>
+            <option value={7}>7 posts per week (daily)</option>
+          </select>
+          <p className="text-xs text-gray-500 mt-2">
+            How often we auto-post your project photos to social media
+          </p>
+        </div>
+      </div>
+
       {/* Branding */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
         <h2 className="font-semibold text-gray-900 mb-6">Branding</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Template
@@ -285,7 +311,7 @@ export default function SettingsForm({ company }: SettingsFormProps) {
               name="template"
               value={formData.template}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
             >
               {Object.values(TEMPLATE_CONFIGS).map((template) => (
                 <option key={template.name} value={template.name}>
@@ -295,8 +321,8 @@ export default function SettingsForm({ company }: SettingsFormProps) {
             </select>
           </div>
 
-          <div className="flex gap-4">
-            <div className="flex-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Primary Color
               </label>
@@ -306,19 +332,19 @@ export default function SettingsForm({ company }: SettingsFormProps) {
                   name="primary_color"
                   value={formData.primary_color}
                   onChange={handleChange}
-                  className="w-12 h-12 rounded border border-gray-300 cursor-pointer"
+                  className="w-12 h-12 rounded border border-gray-300 cursor-pointer flex-shrink-0"
                 />
                 <input
                   type="text"
                   value={formData.primary_color}
                   onChange={handleChange}
                   name="primary_color"
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg"
+                  className="w-full min-w-0 px-3 py-2 border border-gray-300 rounded-lg text-sm"
                 />
               </div>
             </div>
 
-            <div className="flex-1">
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Secondary Color
               </label>
@@ -328,14 +354,14 @@ export default function SettingsForm({ company }: SettingsFormProps) {
                   name="secondary_color"
                   value={formData.secondary_color}
                   onChange={handleChange}
-                  className="w-12 h-12 rounded border border-gray-300 cursor-pointer"
+                  className="w-12 h-12 rounded border border-gray-300 cursor-pointer flex-shrink-0"
                 />
                 <input
                   type="text"
                   value={formData.secondary_color}
                   onChange={handleChange}
                   name="secondary_color"
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg"
+                  className="w-full min-w-0 px-3 py-2 border border-gray-300 rounded-lg text-sm"
                 />
               </div>
             </div>
@@ -344,7 +370,7 @@ export default function SettingsForm({ company }: SettingsFormProps) {
       </div>
 
       {/* Submit */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-4">
         <div>
           {saved && (
             <p className="text-green-600 text-sm flex items-center gap-2">
@@ -356,7 +382,7 @@ export default function SettingsForm({ company }: SettingsFormProps) {
         <button
           type="submit"
           disabled={loading}
-          className="px-8 py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50"
+          className="w-full sm:w-auto px-8 py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50"
         >
           {loading ? 'Saving...' : 'Save Changes'}
         </button>

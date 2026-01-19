@@ -59,7 +59,7 @@ export default async function PostsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
             Scheduled Posts
@@ -74,38 +74,56 @@ export default async function PostsPage() {
         )}
       </div>
 
-      {/* Status cards */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-blue-600" />
+      {/* Posting frequency info */}
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <p className="font-medium text-blue-900">Posting frequency</p>
+            <p className="text-sm text-blue-700">
+              Currently posting <strong>{company.posts_per_week || 5}x per week</strong> across connected platforms
+            </p>
+          </div>
+          <Link
+            href="/admin/settings"
+            className="text-blue-600 text-sm font-medium hover:underline whitespace-nowrap"
+          >
+            Change settings
+          </Link>
+        </div>
+      </div>
+
+      {/* Status cards - compact on mobile */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
+        <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-center sm:text-left">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{pendingCount}</p>
-              <p className="text-sm text-gray-500">Scheduled</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{pendingCount}</p>
+              <p className="text-xs sm:text-sm text-gray-500">Scheduled</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <Zap className="w-5 h-5 text-green-600" />
+        <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-center sm:text-left">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{postedCount}</p>
-              <p className="text-sm text-gray-500">Posted</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{postedCount}</p>
+              <p className="text-xs sm:text-sm text-gray-500">Posted</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-              <span className="text-red-600 font-bold">!</span>
+        <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-center sm:text-left">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span className="text-red-600 font-bold text-sm">!</span>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{failedCount}</p>
-              <p className="text-sm text-gray-500">Failed</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{failedCount}</p>
+              <p className="text-xs sm:text-sm text-gray-500">Failed</p>
             </div>
           </div>
         </div>
@@ -113,7 +131,7 @@ export default async function PostsPage() {
 
       {/* Posting status */}
       {!company.posting_enabled && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-8">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
           <p className="text-yellow-800">
             <strong>Posting is paused.</strong> Connect your social accounts to enable automatic posting.
           </p>

@@ -39,12 +39,28 @@ export default async function SocialPage() {
     )
   }
 
-  // Get connected accounts
-  const admin = createAdminClient()
-  const { data: tokens } = await admin
-    .from('social_tokens')
-    .select('*')
-    .eq('company_id', company.id)
+  // Get connected accounts (handle if table doesn't exist yet)
+  interface SocialToken {
+    platform: string
+    is_connected: boolean
+    platform_username?: string
+    platform_avatar_url?: string
+    expires_at?: string
+  }
+  let tokens: SocialToken[] = []
+  try {
+    const admin = createAdminClient()
+    const { data, error } = await admin
+      .from('social_tokens')
+      .select('*')
+      .eq('company_id', company.id)
+
+    if (!error && data) {
+      tokens = data as SocialToken[]
+    }
+  } catch {
+    // Table might not exist yet - that's ok
+  }
 
   const platforms = [
     {
@@ -134,11 +150,27 @@ export default async function SocialPage() {
       {/* Requirements */}
       <div className="mt-6 bg-blue-50 rounded-xl p-6">
         <h3 className="font-semibold text-blue-900 mb-2">Requirements</h3>
-        <ul className="space-y-1 text-sm text-blue-800">
+        <ul className="space-y-2 text-sm text-blue-800">
           <li>&bull; <strong>Instagram:</strong> Must be a Business or Creator account linked to a Facebook Page</li>
           <li>&bull; <strong>Facebook:</strong> Must be a Facebook Business Page (not personal profile)</li>
-          <li>&bull; <strong>Google:</strong> Must have a verified Google Business Profile</li>
+          <li>&bull; <strong>Google Business:</strong> Must have a verified Google Business Profile</li>
         </ul>
+      </div>
+
+      {/* Google Reviews info */}
+      <div className="mt-6 bg-green-50 rounded-xl p-6">
+        <h3 className="font-semibold text-green-900 mb-2">Google Reviews</h3>
+        <p className="text-sm text-green-800 mb-3">
+          When you connect Google Business Profile, we can:
+        </p>
+        <ul className="space-y-1 text-sm text-green-700">
+          <li>&bull; Auto-post your project photos to your Google Business Profile</li>
+          <li>&bull; Pull your Google Reviews to display on your website</li>
+          <li>&bull; Show your Google rating and review count</li>
+        </ul>
+        <p className="text-xs text-green-600 mt-3">
+          You can also manually add reviews from Settings if you prefer.
+        </p>
       </div>
     </div>
   )
