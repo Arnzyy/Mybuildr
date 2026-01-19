@@ -7,6 +7,7 @@ import BoldTemplate from '@/components/templates/BoldTemplate'
 import CorporateTemplate from '@/components/templates/CorporateTemplate'
 import CraftsmanTemplate from '@/components/templates/CraftsmanTemplate'
 import EmergencyTemplate from '@/components/templates/EmergencyTemplate'
+import DaxaTemplate from '@/components/templates/DaxaTemplate'
 
 const TEMPLATES: Record<TemplateName, React.ComponentType<TemplateProps>> = {
   developer: DeveloperTemplate,
@@ -17,6 +18,7 @@ const TEMPLATES: Record<TemplateName, React.ComponentType<TemplateProps>> = {
   corporate: CorporateTemplate,
   craftsman: CraftsmanTemplate,
   emergency: EmergencyTemplate,
+  daxa: DaxaTemplate,
 }
 
 export function renderTemplate(props: TemplateProps) {

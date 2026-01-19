@@ -9,6 +9,7 @@ export type TemplateName =
   | 'corporate'
   | 'craftsman'
   | 'emergency'
+  | 'daxa'
 
 export interface TemplateProps {
   company: Company
@@ -71,5 +72,11 @@ export const TEMPLATE_CONFIGS: Record<TemplateName, TemplateConfig> = {
     displayName: 'Emergency',
     description: '24/7 services with urgent CTAs',
     features: ['Phone prominent', 'Availability badge', 'Fast response'],
+  },
+  daxa: {
+    name: 'daxa',
+    displayName: 'DAXA Custom',
+    description: 'Custom premium design for DAXA Building Solutions',
+    features: ['Animated hero', 'Parallax effects', 'Premium gallery', 'Custom branding'],
   },
 }

@@ -9,6 +9,7 @@ export type Template =
   | 'corporate'
   | 'craftsman'
   | 'emergency'
+  | 'daxa'
 
 export interface Company {
   id: string
