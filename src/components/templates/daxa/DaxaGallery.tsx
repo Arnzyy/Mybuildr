@@ -52,7 +52,7 @@ export default function DaxaGallery({ projects }: DaxaGalleryProps) {
               key={project.id}
               className={`group relative aspect-square overflow-hidden rounded-lg transition-all duration-500 ${
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
-              } ${index === 0 || index === 5 ? 'md:col-span-2 md:row-span-2' : ''}`}
+              }`}
               style={{ transitionDelay: `${index * 60}ms` }}
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
