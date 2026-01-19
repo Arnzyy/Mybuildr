@@ -12,6 +12,12 @@ export default function Hero() {
 
       <div className="section-container">
         <div className="max-w-4xl mx-auto text-center">
+          {/* Tagline Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-full text-sm font-medium mb-8">
+            <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+            {SITE_CONFIG.tagline}
+          </div>
+
           {/* Pain Headline */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
             {COPY.hero.headline}
