@@ -192,7 +192,7 @@ export default function DemoSection() {
                 </div>
 
                 {/* Post Image with navigation */}
-                <div className="aspect-square md:aspect-[4/3] relative group">
+                <div className="aspect-[4/5] md:aspect-[16/9] relative group">
                   <img
                     src={instagramPosts[currentPost].image}
                     alt="Instagram post"
