@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/schedule-posts",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/execute-posts",
+      "schedule": "0 8,12,18 * * *"
+    }
+  ]
+}
