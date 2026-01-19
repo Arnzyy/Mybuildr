@@ -82,7 +82,7 @@ export default function DemoSection() {
                   <div className="w-48 bg-gray-900 text-white p-4 hidden sm:block">
                     <div className="flex items-center gap-2 mb-8">
                       <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center font-bold text-sm">TS</div>
-                      <span className="font-semibold text-sm">trade.</span>
+                      <span className="font-semibold text-sm">bytrade</span>
                     </div>
                     <nav className="space-y-1">
                       <div className="flex items-center gap-2 px-3 py-2 bg-gray-800 rounded-lg text-sm">
@@ -167,7 +167,7 @@ export default function DemoSection() {
                     </div>
                     <p className="text-sm font-semibold">47 likes</p>
                     <p className="text-sm"><span className="font-semibold">daxa_management</span> Bespoke handmade in-frame shaker kitchen. Solid oak internals, soft-close everything...</p>
-                    <p className="text-xs text-gray-500 mt-1">Posted 2 hours ago <span className="text-green-600">• Auto-posted by trade.</span></p>
+                    <p className="text-xs text-gray-500 mt-1">Posted 2 hours ago <span className="text-green-600">• Auto-posted by bytrade</span></p>
                   </div>
                 </div>
               )}

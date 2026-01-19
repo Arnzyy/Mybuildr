@@ -1,8 +1,8 @@
 export const SITE_CONFIG = {
-  name: 'trade.',
-  domain: 'trade-sites.co.uk',
+  name: 'bytrade',
+  domain: 'bytrade.co.uk',
   tagline: 'Websites for builders. That actually work.',
-  email: 'hello@trade-sites.co.uk',
+  email: 'hello@bytrade.co.uk',
   phone: '07XXX XXXXXX',
   whatsapp: '447XXXXXXXXX',
 }
