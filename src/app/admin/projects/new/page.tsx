@@ -18,13 +18,13 @@ export default async function NewProjectPage() {
   }
 
   return (
-    <div>
-      <div className="mb-8">
+    <div className="max-w-2xl mx-auto">
+      <div className="mb-6 text-center">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-          Add New Project
+          Upload Photos
         </h1>
-        <p className="text-gray-600 mt-1">
-          Showcase your work with photos and details
+        <p className="text-gray-500 mt-1">
+          Add photos of your latest work
         </p>
       </div>
 

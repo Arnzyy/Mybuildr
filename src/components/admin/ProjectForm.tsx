@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Project } from '@/lib/supabase/types'
 import ImageUploader from './ImageUploader'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react'
 import Link from 'next/link'
 
 interface ProjectFormProps {
@@ -17,6 +17,7 @@ export default function ProjectForm({ companySlug, project }: ProjectFormProps) 
   const isEditing = !!project
 
   const [loading, setLoading] = useState(false)
+  const [showDetails, setShowDetails] = useState(isEditing)
   const [formData, setFormData] = useState({
     title: project?.title || '',
     description: project?.description || '',
@@ -37,10 +38,13 @@ export default function ProjectForm({ companySlug, project }: ProjectFormProps) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.title.trim()) {
-      alert('Please enter a project title')
+    if (images.length === 0) {
+      alert('Please add at least one photo')
       return
     }
+
+    // Auto-generate title if not provided
+    const title = formData.title.trim() || `Project ${new Date().toLocaleDateString('en-GB')}`
 
     setLoading(true)
 
@@ -54,38 +58,38 @@ export default function ProjectForm({ companySlug, project }: ProjectFormProps) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          title,
           images,
         }),
       })
 
       if (res.ok) {
-        router.push('/admin/projects')
+        router.push('/admin')
         router.refresh()
       } else {
         const data = await res.json()
-        alert(data.error || 'Failed to save project')
+        alert(data.error || 'Failed to save')
       }
     } catch {
-      alert('Failed to save project')
+      alert('Failed to save')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-6">
       {/* Back link */}
       <Link
-        href="/admin/projects"
-        className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900"
+        href="/admin"
+        className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back to projects
+        Back
       </Link>
 
-      {/* Images */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="font-semibold text-gray-900 mb-4">Project Photos</h2>
+      {/* PHOTOS - Main focus */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
         <ImageUploader
           images={images}
           onChange={setImages}
@@ -93,41 +97,46 @@ export default function ProjectForm({ companySlug, project }: ProjectFormProps) 
         />
       </div>
 
-      {/* Details */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="font-semibold text-gray-900 mb-6">Project Details</h2>
+      {/* Quick submit button */}
+      <button
+        type="submit"
+        disabled={loading || images.length === 0}
+        className="w-full py-4 bg-orange-500 text-white rounded-xl font-bold text-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {loading ? 'Uploading...' : images.length === 0 ? 'Add Photos to Continue' : 'Upload to Website'}
+      </button>
 
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Project Title *
-            </label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              required
-              placeholder="e.g. Kitchen Extension - Bristol"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-            />
-          </div>
+      {/* Optional details - collapsed by default */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setShowDetails(!showDetails)}
+          className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50"
+        >
+          <span className="text-sm text-gray-600">Add more details (optional)</span>
+          {showDetails ? (
+            <ChevronUp className="w-5 h-5 text-gray-400" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-gray-400" />
+          )}
+        </button>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows={4}
-              placeholder="Describe the project, what you did, any challenges..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-            />
-          </div>
+        {showDetails && (
+          <div className="px-4 pb-4 space-y-4 border-t border-gray-100 pt-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Project Name
+              </label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                placeholder="e.g. Kitchen Extension"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Location
@@ -137,14 +146,14 @@ export default function ProjectForm({ companySlug, project }: ProjectFormProps) 
                 name="location"
                 value={formData.location}
                 onChange={handleChange}
-                placeholder="e.g. Bristol, BS1"
+                placeholder="e.g. Bristol"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Project Type
+                Type of Work
               </label>
               <select
                 name="project_type"
@@ -160,45 +169,26 @@ export default function ProjectForm({ companySlug, project }: ProjectFormProps) 
                 <option value="kitchen">Kitchen</option>
                 <option value="bathroom">Bathroom</option>
                 <option value="landscaping">Landscaping</option>
-                <option value="electrical">Electrical</option>
-                <option value="plumbing">Plumbing</option>
                 <option value="roofing">Roofing</option>
                 <option value="other">Other</option>
               </select>
             </div>
-          </div>
 
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="is_featured"
-              name="is_featured"
-              checked={formData.is_featured}
-              onChange={handleChange}
-              className="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
-            />
-            <label htmlFor="is_featured" className="text-sm text-gray-700">
-              Feature this project (shows prominently on your website)
-            </label>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows={3}
+                placeholder="Any details about the work..."
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+            </div>
           </div>
-        </div>
-      </div>
-
-      {/* Submit */}
-      <div className="flex items-center justify-end gap-4">
-        <Link
-          href="/admin/projects"
-          className="px-6 py-3 text-gray-700 font-medium hover:text-gray-900"
-        >
-          Cancel
-        </Link>
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-8 py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50"
-        >
-          {loading ? 'Saving...' : isEditing ? 'Save Changes' : 'Add Project'}
-        </button>
+        )}
       </div>
     </form>
   )

@@ -103,43 +103,42 @@ export default function ImageUploader({
   return (
     <div className="space-y-4">
       {/* Upload zone */}
-      <div
+      <label
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
+        className={`block border-2 border-dashed rounded-xl p-8 md:p-12 text-center transition-colors cursor-pointer ${
           dragOver
             ? 'border-orange-500 bg-orange-50'
-            : 'border-gray-300 hover:border-gray-400'
+            : 'border-gray-300 hover:border-orange-400 hover:bg-orange-50/50'
         }`}
       >
         {uploading ? (
           <div className="flex flex-col items-center">
-            <Loader2 className="w-8 h-8 text-orange-500 animate-spin mb-2" />
-            <p className="text-gray-600">Uploading...</p>
+            <Loader2 className="w-12 h-12 text-orange-500 animate-spin mb-3" />
+            <p className="text-gray-600 font-medium">Uploading...</p>
           </div>
         ) : (
           <>
-            <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-gray-600 mb-2">
-              Drag & drop images here, or{' '}
-              <label className="text-orange-500 hover:underline cursor-pointer">
-                browse
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  multiple
-                  onChange={(e) => handleFiles(e.target.files)}
-                  className="hidden"
-                />
-              </label>
+            <div className="w-16 h-16 md:w-20 md:h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Upload className="w-8 h-8 md:w-10 md:h-10 text-orange-500" />
+            </div>
+            <p className="text-lg md:text-xl font-semibold text-gray-900 mb-1">
+              Tap to add photos
             </p>
-            <p className="text-xs text-gray-400">
-              JPG, PNG or WebP. Max 10MB per file. {images.length}/{maxImages} images.
+            <p className="text-gray-500 text-sm">
+              or drag and drop
             </p>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/heic"
+              multiple
+              onChange={(e) => handleFiles(e.target.files)}
+              className="hidden"
+            />
           </>
         )}
-      </div>
+      </label>
 
       {/* Image grid */}
       {images.length > 0 && (

@@ -1,16 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
-import { getCompanyForUser, getCompanyProjects, getCompanyReviews } from '@/lib/supabase/queries'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { getCompanyForUser, getCompanyProjects } from '@/lib/supabase/queries'
 import { redirect } from 'next/navigation'
 import { hasFeature } from '@/lib/features'
 import Link from 'next/link'
 import {
-  FolderOpen,
-  Star,
-  Calendar,
+  Camera,
   Eye,
-  ArrowRight,
-  TrendingUp
+  Share2,
+  FolderOpen,
+  CheckCircle2
 } from 'lucide-react'
 
 export default async function AdminDashboard() {
@@ -23,190 +21,138 @@ export default async function AdminDashboard() {
   if (!company) redirect('/login')
 
   const projects = await getCompanyProjects(company.id)
-  const reviews = await getCompanyReviews(company.id)
-
-  // Get enquiries count
-  const adminClient = createAdminClient()
-  const { count: enquiriesCount } = await adminClient
-    .from('enquiries')
-    .select('*', { count: 'exact', head: true })
-    .eq('company_id', company.id)
-    .eq('status', 'new')
-
-  // Get scheduled posts count (if tier allows)
-  let scheduledPostsCount = 0
-  if (hasFeature(company.tier, 'view_scheduled_posts')) {
-    const { count } = await adminClient
-      .from('scheduled_posts')
-      .select('*', { count: 'exact', head: true })
-      .eq('company_id', company.id)
-      .eq('status', 'pending')
-    scheduledPostsCount = count || 0
-  }
-
-  const stats = [
-    {
-      label: 'Projects',
-      value: projects.length,
-      icon: FolderOpen,
-      href: '/admin/projects',
-      color: 'blue',
-      locked: false,
-    },
-    {
-      label: 'Reviews',
-      value: reviews.length,
-      icon: Star,
-      href: '/admin/reviews',
-      color: 'yellow',
-      locked: false,
-    },
-    {
-      label: 'New Enquiries',
-      value: enquiriesCount || 0,
-      icon: TrendingUp,
-      href: '/admin',
-      color: 'green',
-      locked: false,
-    },
-    {
-      label: 'Scheduled Posts',
-      value: scheduledPostsCount,
-      icon: Calendar,
-      href: '/admin/posts',
-      color: 'orange',
-      locked: !hasFeature(company.tier, 'view_scheduled_posts'),
-    },
-  ]
+  const totalPhotos = projects.reduce((sum, p) => sum + (p.images?.length || 0), 0)
+  const hasSocialConnected = hasFeature(company.tier, 'social_connections') && company.posting_enabled
 
   return (
-    <div>
-      {/* Welcome header */}
-      <div className="mb-8">
+    <div className="max-w-2xl mx-auto">
+      {/* Welcome */}
+      <div className="text-center mb-8">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-          Welcome back
+          {company.name}
         </h1>
-        <p className="text-gray-600 mt-1">
-          Here&apos;s what&apos;s happening with {company.name}
+        <p className="text-gray-500 mt-1">Upload photos, we do the rest</p>
+      </div>
+
+      {/* BIG UPLOAD BUTTON */}
+      <Link
+        href="/admin/projects/new"
+        className="block bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-8 md:p-12 text-center text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all mb-6"
+      >
+        <div className="w-20 h-20 md:w-24 md:h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Camera className="w-10 h-10 md:w-12 md:h-12" />
+        </div>
+        <p className="text-2xl md:text-3xl font-bold mb-2">UPLOAD PHOTOS</p>
+        <p className="text-orange-100 text-sm md:text-base">
+          Add project photos to your website & social media
         </p>
-      </div>
+      </Link>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {stats.map((stat) => (
-          <Link
-            key={stat.label}
-            href={stat.locked ? '#' : stat.href}
-            className={`bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow ${
-              stat.locked ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-gray-100">
-                <stat.icon className="w-6 h-6 text-gray-600" />
-              </div>
-              {stat.locked && (
-                <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">
-                  Pro+
-                </span>
-              )}
+      {/* Quick stats row */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <Link
+          href="/admin/projects"
+          className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+              <FolderOpen className="w-6 h-6 text-blue-600" />
             </div>
-            <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
-            <p className="text-sm text-gray-500">{stat.label}</p>
-          </Link>
-        ))}
-      </div>
-
-      {/* Quick actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {/* View site */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">Your Website</h2>
-          <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">
-                {company.slug}.bytrade.co.uk
-              </p>
-              <p className="text-xs text-green-600 flex items-center gap-1">
-                <span className="w-2 h-2 bg-green-500 rounded-full" />
-                Published
-              </p>
+              <p className="text-2xl font-bold text-gray-900">{projects.length}</p>
+              <p className="text-sm text-gray-500">Projects</p>
             </div>
-            <a
-              href={`/sites/${company.slug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800"
-            >
-              <Eye className="w-4 h-4" />
-              View Site
-            </a>
           </div>
-        </div>
+        </Link>
 
-        {/* Plan info */}
-        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white">
-          <h2 className="font-semibold mb-2">Your Plan</h2>
-          <p className="text-3xl font-bold capitalize mb-1">{company.tier}</p>
-          <p className="text-orange-100 text-sm mb-4">
-            &pound;{company.tier === 'starter' ? '99' : company.tier === 'pro' ? '149' : '199'}/month
-          </p>
-          {company.tier !== 'full' && (
-            <Link
-              href="/admin/billing"
-              className="inline-flex items-center gap-2 bg-white text-orange-500 px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-50"
-            >
-              Upgrade
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          )}
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+              <Camera className="w-6 h-6 text-green-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{totalPhotos}</p>
+              <p className="text-sm text-gray-500">Photos</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Recent activity / tips */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="font-semibold text-gray-900 mb-4">Getting Started</h2>
-        <div className="space-y-3">
+      {/* View site button */}
+      <a
+        href={`/sites/${company.slug}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-center gap-3 bg-gray-900 text-white rounded-xl p-4 font-medium hover:bg-gray-800 transition-colors mb-6"
+      >
+        <Eye className="w-5 h-5" />
+        View Your Website
+      </a>
+
+      {/* Social connection status */}
+      {hasFeature(company.tier, 'social_connections') ? (
+        <Link
+          href="/admin/social"
+          className={`flex items-center justify-between rounded-xl p-4 mb-6 ${
+            hasSocialConnected
+              ? 'bg-green-50 border border-green-200'
+              : 'bg-yellow-50 border border-yellow-200'
+          }`}
+        >
           <div className="flex items-center gap-3">
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-sm ${
-              projects.length > 0 ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
-            }`}>
-              {projects.length > 0 ? '✓' : '1'}
-            </div>
-            <p className={projects.length > 0 ? 'text-gray-500 line-through' : 'text-gray-700'}>
-              Add your first project with photos
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-sm ${
-              company.description ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
-            }`}>
-              {company.description ? '✓' : '2'}
-            </div>
-            <p className={company.description ? 'text-gray-500 line-through' : 'text-gray-700'}>
-              Complete your company profile
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-sm ${
-              reviews.length > 0 ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
-            }`}>
-              {reviews.length > 0 ? '✓' : '3'}
-            </div>
-            <p className={reviews.length > 0 ? 'text-gray-500 line-through' : 'text-gray-700'}>
-              Add customer reviews
-            </p>
-          </div>
-          {hasFeature(company.tier, 'social_connections') && (
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center text-sm bg-gray-100 text-gray-400">
-                4
-              </div>
-              <p className="text-gray-700">
-                Connect your social accounts for auto-posting
+            {hasSocialConnected ? (
+              <CheckCircle2 className="w-6 h-6 text-green-600" />
+            ) : (
+              <Share2 className="w-6 h-6 text-yellow-600" />
+            )}
+            <div>
+              <p className={`font-medium ${hasSocialConnected ? 'text-green-800' : 'text-yellow-800'}`}>
+                {hasSocialConnected ? 'Auto-posting enabled' : 'Connect your socials'}
+              </p>
+              <p className={`text-sm ${hasSocialConnected ? 'text-green-600' : 'text-yellow-600'}`}>
+                {hasSocialConnected
+                  ? 'Photos will post automatically'
+                  : 'Link Instagram & Facebook to auto-post'
+                }
               </p>
             </div>
-          )}
+          </div>
+          <span className={`text-sm font-medium ${hasSocialConnected ? 'text-green-600' : 'text-yellow-600'}`}>
+            {hasSocialConnected ? 'Manage' : 'Set up'} →
+          </span>
+        </Link>
+      ) : (
+        <Link
+          href="/admin/billing"
+          className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6"
+        >
+          <div className="flex items-center gap-3">
+            <Share2 className="w-6 h-6 text-gray-400" />
+            <div>
+              <p className="font-medium text-gray-700">Auto-post to social media</p>
+              <p className="text-sm text-gray-500">Upgrade to Full Package</p>
+            </div>
+          </div>
+          <span className="text-sm font-medium text-orange-500">Upgrade →</span>
+        </Link>
+      )}
+
+      {/* Simple how it works */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <p className="font-semibold text-gray-900 mb-3">How it works</p>
+        <div className="space-y-3 text-sm">
+          <div className="flex items-start gap-3">
+            <span className="w-6 h-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-xs">1</span>
+            <p className="text-gray-600">Upload photos of your work</p>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="w-6 h-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-xs">2</span>
+            <p className="text-gray-600">Photos appear on your website instantly</p>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="w-6 h-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-xs">3</span>
+            <p className="text-gray-600">We auto-post to your socials with AI captions</p>
+          </div>
         </div>
       </div>
     </div>
