@@ -26,8 +26,8 @@ export default function Header() {
             <a href="#how-it-works" className="text-sm text-gray-600 hover:text-gray-900">
               How It Works
             </a>
-            <a href="#demo" className="text-sm text-gray-600 hover:text-gray-900">
-              Demo
+            <a href="/templates" className="text-sm text-gray-600 hover:text-gray-900">
+              Templates
             </a>
             <a href="#pricing" className="text-sm text-gray-600 hover:text-gray-900">
               Pricing
@@ -56,8 +56,8 @@ export default function Header() {
               <a href="#how-it-works" className="text-gray-600 hover:text-gray-900">
                 How It Works
               </a>
-              <a href="#demo" className="text-gray-600 hover:text-gray-900">
-                Demo
+              <a href="/templates" className="text-gray-600 hover:text-gray-900">
+                Templates
               </a>
               <a href="#pricing" className="text-gray-600 hover:text-gray-900">
                 Pricing
