@@ -14,6 +14,7 @@ const demoImages = [
   { src: '/images/demo-1.webp', label: 'Extension' },
   { src: '/images/demo-2.jpg', label: 'Renovation' },
   { src: '/images/demo-3.jpg', label: 'Bathroom' },
+  { src: '/images/demo-4.webp', label: 'Living Room' },
 ]
 
 const instagramPosts = [
@@ -39,6 +40,12 @@ const instagramPosts = [
     image: '/images/demo-3.jpg',
     caption: 'Bathroom refit in Bishopston. Walk-in shower, heated floors, new everything. Done and dusted in 2 weeks.',
     likes: 34,
+    time: '1 week ago',
+  },
+  {
+    image: '/images/demo-4.webp',
+    caption: 'Open plan living space transformation. Knocked through, new flooring, fresh plastering. Modern family home sorted.',
+    likes: 56,
     time: '1 week ago',
   },
 ]
