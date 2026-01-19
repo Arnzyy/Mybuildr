@@ -191,12 +191,12 @@ export default function DemoSection() {
                   <MoreHorizontal className="w-5 h-5 text-gray-400" />
                 </div>
 
-                {/* Post Image with navigation */}
-                <div className="aspect-[4/5] md:aspect-[16/9] relative group">
+                {/* Post Image with navigation - fixed height container */}
+                <div className="h-[300px] md:h-[350px] relative group overflow-hidden">
                   <img
                     src={instagramPosts[currentPost].image}
                     alt="Instagram post"
-                    className="w-full h-full object-cover transition-opacity duration-500"
+                    className="absolute inset-0 w-full h-full object-cover"
                   />
 
                   {/* Navigation arrows */}
