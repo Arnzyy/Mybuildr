@@ -162,7 +162,7 @@ export default function DemoSection() {
                   <p className="text-xs text-gray-500">All auto-posted</p>
                 </div>
                 <div className="grid grid-cols-4 gap-3">
-                  {demoImages.map((img, i) => (
+                  {demoImages.slice(0, 4).map((img, i) => (
                     <div key={i} className="relative group">
                       <div className="aspect-square rounded-xl overflow-hidden">
                         <img
