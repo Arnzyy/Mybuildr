@@ -7,22 +7,42 @@ interface DaxaServicesProps {
   company: Company
 }
 
-const serviceDescriptions: Record<string, string> = {
-  'Extensions': 'Beautifully designed extensions that blend seamlessly with your home.',
-  'Loft Conversions': 'Expert conversions that add valuable living space and property value.',
-  'Knock Throughs': 'Open-plan living spaces that modernize your home layout.',
-  'Renovations': 'Complete renovations that breathe new life into tired properties.',
-  'New Builds': 'Quality construction from foundations to finishing touches.',
-  'Garden Work': 'Summer houses, patios, decking, and complete garden makeovers.',
+const R2_BASE = 'https://pub-230d2c6e1ece421290be2447f48c41b8.r2.dev/daxa-construction/gallery'
+
+const serviceData: Record<string, { description: string; image: string }> = {
+  'Extensions': {
+    description: 'Beautifully designed extensions that blend seamlessly with your home.',
+    image: `${R2_BASE}/001.jpg`,
+  },
+  'Loft Conversions': {
+    description: 'Expert conversions that add valuable living space and property value.',
+    image: `${R2_BASE}/002.jpg`,
+  },
+  'Knock Throughs': {
+    description: 'Open-plan living spaces that modernize your home layout.',
+    image: `${R2_BASE}/003.jpg`,
+  },
+  'Renovations': {
+    description: 'Complete renovations that breathe new life into tired properties.',
+    image: `${R2_BASE}/004.jpg`,
+  },
+  'New Builds': {
+    description: 'Quality construction from foundations to finishing touches.',
+    image: `${R2_BASE}/005.jpg`,
+  },
+  'Garden Work': {
+    description: 'Summer houses, patios, decking, and complete garden makeovers.',
+    image: `${R2_BASE}/006.jpg`,
+  },
 }
 
 const defaultServices = [
-  { title: 'Extensions', description: 'Beautifully designed extensions that blend seamlessly with your home.' },
-  { title: 'Loft Conversions', description: 'Expert conversions that add valuable living space and property value.' },
-  { title: 'Knock Throughs', description: 'Open-plan living spaces that modernize your home layout.' },
-  { title: 'Renovations', description: 'Complete renovations that breathe new life into tired properties.' },
-  { title: 'New Builds', description: 'Quality construction from foundations to finishing touches.' },
-  { title: 'Garden Work', description: 'Summer houses, patios, decking, and complete garden makeovers.' },
+  { title: 'Extensions', ...serviceData['Extensions'] },
+  { title: 'Loft Conversions', ...serviceData['Loft Conversions'] },
+  { title: 'Knock Throughs', ...serviceData['Knock Throughs'] },
+  { title: 'Renovations', ...serviceData['Renovations'] },
+  { title: 'New Builds', ...serviceData['New Builds'] },
+  { title: 'Garden Work', ...serviceData['Garden Work'] },
 ]
 
 export default function DaxaServices({ company }: DaxaServicesProps) {
@@ -30,10 +50,12 @@ export default function DaxaServices({ company }: DaxaServicesProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const sectionRef = useRef<HTMLElement>(null)
 
+  // Use company services if available, with images from serviceData
   const services = company.services && company.services.length > 0
-    ? company.services.map(s => ({
+    ? company.services.map((s, i) => ({
         title: s,
-        description: serviceDescriptions[s] || `Professional ${s.toLowerCase()} services.`,
+        description: serviceData[s]?.description || `Professional ${s.toLowerCase()} services.`,
+        image: serviceData[s]?.image || `${R2_BASE}/${String(i + 1).padStart(3, '0')}.jpg`,
       }))
     : defaultServices
 
@@ -85,12 +107,13 @@ export default function DaxaServices({ company }: DaxaServicesProps) {
               }`}
               style={{ transitionDelay: `${index * 80}ms` }}
             >
-              {/* Gradient Background */}
-              <div className="relative h-52 overflow-hidden bg-gradient-to-br from-[#1e3a5f] to-[#0f172a]">
+              {/* Image */}
+              <div className="relative h-52 overflow-hidden">
                 <div
-                  className={`absolute inset-0 bg-gradient-to-br from-[#E91E8C]/20 to-[#38BDF8]/20 transition-opacity duration-500 ${
-                    hoveredIndex === index ? 'opacity-100' : 'opacity-0'
+                  className={`absolute inset-0 bg-cover bg-center transition-transform duration-500 ${
+                    hoveredIndex === index ? 'scale-105' : 'scale-100'
                   }`}
+                  style={{ backgroundImage: `url('${service.image}')` }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
