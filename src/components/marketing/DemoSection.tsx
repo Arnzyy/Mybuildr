@@ -259,7 +259,7 @@ export default function DemoSection() {
             {/* Footer */}
             <div className="px-4 md:px-6 py-4 bg-gradient-to-r from-orange-50 to-amber-50 border-t border-orange-100">
               <p className="text-sm text-orange-900 text-center md:text-left">
-                <strong>Real client.</strong> Dave hasn&apos;t touched Instagram in months. His feed posts itself.
+                <strong>Real client.</strong> Connor hasn&apos;t touched Instagram in months. His feed posts itself.
               </p>
             </div>
           </div>
