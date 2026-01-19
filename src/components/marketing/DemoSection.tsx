@@ -144,15 +144,12 @@ export default function DemoSection() {
                   </div>
 
                   {/* Post Image */}
-                  <div className="flex-1 bg-gradient-to-br from-gray-700 to-gray-800 relative">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center text-white/60">
-                        <div className="w-16 h-16 border-2 border-white/30 rounded-lg mx-auto mb-2 flex items-center justify-center">
-                          <Image className="w-8 h-8" />
-                        </div>
-                        <p className="text-sm">Kitchen renovation complete</p>
-                      </div>
-                    </div>
+                  <div className="flex-1 relative">
+                    <img
+                      src="/images/kitchen-demo.jpg"
+                      alt="Bespoke kitchen renovation"
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
                     <div className="absolute top-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded">
                       1/4
                     </div>
@@ -169,7 +166,7 @@ export default function DemoSection() {
                       <Bookmark className="w-6 h-6 text-gray-700" />
                     </div>
                     <p className="text-sm font-semibold">47 likes</p>
-                    <p className="text-sm"><span className="font-semibold">daxa_management</span> Another stunning kitchen transformation in Clifton. Shaker style cabinets with...</p>
+                    <p className="text-sm"><span className="font-semibold">daxa_management</span> Bespoke handmade in-frame shaker kitchen. Solid oak internals, soft-close everything...</p>
                     <p className="text-xs text-gray-500 mt-1">Posted 2 hours ago <span className="text-green-600">• Auto-posted by Trade Sites</span></p>
                   </div>
                 </div>

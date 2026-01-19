@@ -13,8 +13,12 @@ export default function Header() {
       <div className="section-container">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="text-xl font-bold text-gray-900">
-            {SITE_CONFIG.name}
+          <Link href="/" className="flex items-center">
+            <img
+              src="/images/logo.png"
+              alt={SITE_CONFIG.name}
+              className="h-10 w-auto"
+            />
           </Link>
 
           {/* Desktop Nav */}
