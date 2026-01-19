@@ -13,26 +13,35 @@ export async function middleware(request: NextRequest) {
     },
   })
 
-  // Create Supabase client for auth check
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options)
-          })
-        },
-      },
-    }
-  )
-
-  // Check auth for admin routes
+  // Check auth for admin routes only
   if (url.pathname.startsWith('/admin')) {
+    // Ensure env vars exist
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing Supabase environment variables')
+      return NextResponse.redirect(new URL('/login?error=config', request.url))
+    }
+
+    // Create Supabase client for auth check
+    const supabase = createServerClient(
+      supabaseUrl,
+      supabaseKey,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              response.cookies.set(name, value, options)
+            })
+          },
+        },
+      }
+    )
+
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
