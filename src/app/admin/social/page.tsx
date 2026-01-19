@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { hasFeature } from '@/lib/features'
 import Link from 'next/link'
 import SocialAccountCard from '@/components/admin/SocialAccountCard'
-import { Lock, Instagram, Facebook, MapPin } from 'lucide-react'
+import { Lock } from 'lucide-react'
 
 export default async function SocialPage() {
   const supabase = await createClient()
@@ -66,21 +66,18 @@ export default async function SocialPage() {
     {
       id: 'instagram',
       name: 'Instagram',
-      icon: Instagram,
       color: 'bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400',
       description: 'Post photos to your Instagram Business account',
     },
     {
       id: 'facebook',
       name: 'Facebook',
-      icon: Facebook,
       color: 'bg-blue-600',
       description: 'Post to your Facebook Business Page',
     },
     {
       id: 'google',
       name: 'Google Business',
-      icon: MapPin,
       color: 'bg-green-500',
       description: 'Post updates to Google Business Profile',
     },

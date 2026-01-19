@@ -2,14 +2,19 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { Check, Loader2, LucideIcon } from 'lucide-react'
+import { Check, Loader2, Instagram, Facebook, MapPin } from 'lucide-react'
 
 interface Platform {
   id: string
   name: string
-  icon: LucideIcon
   color: string
   description: string
+}
+
+const platformIcons = {
+  instagram: Instagram,
+  facebook: Facebook,
+  google: MapPin,
 }
 
 interface Token {
@@ -83,7 +88,7 @@ export default function SocialAccountCard({
     }
   }
 
-  const Icon = platform.icon
+  const Icon = platformIcons[platform.id as keyof typeof platformIcons] || MapPin
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
