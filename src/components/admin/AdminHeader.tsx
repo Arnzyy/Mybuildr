@@ -35,7 +35,7 @@ export default function AdminHeader({ company }: AdminHeaderProps) {
   const handleSignOut = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push('/login')
+    router.push('/admin/login')
   }
 
   const navItems = [

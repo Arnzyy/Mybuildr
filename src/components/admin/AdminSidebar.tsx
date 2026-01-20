@@ -13,8 +13,11 @@ import {
   Star,
   CreditCard,
   ExternalLink,
-  Lock
+  Lock,
+  LogOut
 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 
 interface AdminSidebarProps {
   company: Company
@@ -22,6 +25,13 @@ interface AdminSidebarProps {
 
 export default function AdminSidebar({ company }: AdminSidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/admin/login')
+  }
 
   const navItems = [
     {
@@ -116,8 +126,8 @@ export default function AdminSidebar({ company }: AdminSidebarProps) {
         })}
       </nav>
 
-      {/* View site link */}
-      <div className="p-4 border-t border-gray-800">
+      {/* View site link & Logout */}
+      <div className="p-4 border-t border-gray-800 space-y-3">
         <a
           href={`/sites/${company.slug}`}
           target="_blank"
@@ -127,6 +137,13 @@ export default function AdminSidebar({ company }: AdminSidebarProps) {
           <ExternalLink className="w-4 h-4" />
           View Live Site
         </a>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 text-sm text-gray-400 hover:text-red-400 transition-colors w-full"
+        >
+          <LogOut className="w-4 h-4" />
+          Log Out
+        </button>
       </div>
 
       {/* Upgrade prompt for non-full tier */}
