@@ -8,9 +8,9 @@ export const OAUTH_CONFIG = {
     authUrl: 'https://www.facebook.com/v18.0/dialog/oauth',
     tokenUrl: 'https://graph.facebook.com/v18.0/oauth/access_token',
     scope: [
-      'instagram_basic',
-      'instagram_content_publish',
-      'instagram_manage_comments',
+      'instagram_business_basic',
+      'instagram_business_content_publish',
+      'instagram_business_manage_comments',
       'pages_show_list',
       'pages_read_engagement',
       'business_management',
