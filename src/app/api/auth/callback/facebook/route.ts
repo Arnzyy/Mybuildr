@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getCompanyForUser } from '@/lib/supabase/queries'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { OAUTH_CONFIG } from '@/lib/oauth/config'
+import { OAUTH_CONFIG, getRedirectUri } from '@/lib/oauth/config'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
         client_id: process.env.META_APP_ID!,
         client_secret: process.env.META_APP_SECRET!,
         grant_type: 'authorization_code',
-        redirect_uri: OAUTH_CONFIG.facebook.redirectUri,
+        redirect_uri: getRedirectUri('facebook'),
         code,
       }),
     })

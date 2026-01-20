@@ -1,3 +1,8 @@
+// Helper to get base URL at runtime
+function getBaseUrl(): string {
+  return process.env.NEXT_PUBLIC_BASE_URL || 'https://mybuildr.vercel.app'
+}
+
 export const OAUTH_CONFIG = {
   instagram: {
     authUrl: 'https://www.facebook.com/v18.0/dialog/oauth',
@@ -10,7 +15,6 @@ export const OAUTH_CONFIG = {
       'pages_read_engagement',
       'business_management',
     ].join(','),
-    redirectUri: `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/callback/instagram`,
   },
   facebook: {
     authUrl: 'https://www.facebook.com/v18.0/dialog/oauth',
@@ -22,7 +26,6 @@ export const OAUTH_CONFIG = {
       'pages_read_user_content',
       'business_management',
     ].join(','),
-    redirectUri: `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/callback/facebook`,
   },
   google: {
     authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -30,14 +33,14 @@ export const OAUTH_CONFIG = {
     scope: [
       'https://www.googleapis.com/auth/business.manage',
     ].join(' '),
-    redirectUri: `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/callback/google`,
   },
 }
 
 export function getInstagramAuthUrl(state: string): string {
+  const redirectUri = `${getBaseUrl()}/api/auth/callback/instagram`
   const params = new URLSearchParams({
     client_id: process.env.META_APP_ID!,
-    redirect_uri: OAUTH_CONFIG.instagram.redirectUri,
+    redirect_uri: redirectUri,
     scope: OAUTH_CONFIG.instagram.scope,
     response_type: 'code',
     state,
@@ -46,9 +49,10 @@ export function getInstagramAuthUrl(state: string): string {
 }
 
 export function getFacebookAuthUrl(state: string): string {
+  const redirectUri = `${getBaseUrl()}/api/auth/callback/facebook`
   const params = new URLSearchParams({
     client_id: process.env.META_APP_ID!,
-    redirect_uri: OAUTH_CONFIG.facebook.redirectUri,
+    redirect_uri: redirectUri,
     scope: OAUTH_CONFIG.facebook.scope,
     response_type: 'code',
     state,
@@ -57,9 +61,10 @@ export function getFacebookAuthUrl(state: string): string {
 }
 
 export function getGoogleAuthUrl(state: string): string {
+  const redirectUri = `${getBaseUrl()}/api/auth/callback/google`
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID!,
-    redirect_uri: OAUTH_CONFIG.google.redirectUri,
+    redirect_uri: redirectUri,
     scope: OAUTH_CONFIG.google.scope,
     response_type: 'code',
     access_type: 'offline',
@@ -67,4 +72,9 @@ export function getGoogleAuthUrl(state: string): string {
     state,
   })
   return `${OAUTH_CONFIG.google.authUrl}?${params}`
+}
+
+// Export for use in callback handlers
+export function getRedirectUri(platform: 'instagram' | 'facebook' | 'google'): string {
+  return `${getBaseUrl()}/api/auth/callback/${platform}`
 }
