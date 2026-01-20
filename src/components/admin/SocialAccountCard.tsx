@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import { Check, Loader2, Instagram, Facebook, MapPin } from 'lucide-react'
 
 interface Platform {
@@ -18,10 +17,9 @@ const platformIcons = {
 }
 
 interface Token {
-  platform_username?: string
-  platform_avatar_url?: string
+  account_name?: string
   is_connected: boolean
-  expires_at?: string
+  token_expires_at?: string
 }
 
 interface SocialAccountCardProps {
@@ -105,18 +103,9 @@ export default function SocialAccountCard({
           <>
             {/* Connected state */}
             <div className="flex items-center gap-3 mb-4">
-              {token.platform_avatar_url && (
-                <Image
-                  src={token.platform_avatar_url}
-                  alt={token.platform_username || 'Avatar'}
-                  width={40}
-                  height={40}
-                  className="rounded-full"
-                />
-              )}
               <div>
                 <p className="font-medium text-gray-900">
-                  @{token.platform_username || 'Connected'}
+                  {token.account_name || 'Connected'}
                 </p>
                 <p className="text-xs text-green-600 flex items-center gap-1">
                   <Check className="w-3 h-3" />
@@ -126,7 +115,7 @@ export default function SocialAccountCard({
             </div>
 
             {/* Token expiry warning */}
-            {token.expires_at && new Date(token.expires_at) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) && (
+            {token.token_expires_at && new Date(token.token_expires_at) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) && (
               <p className="text-xs text-yellow-600 mb-4">
                 Token expires soon. Reconnect to continue posting.
               </p>

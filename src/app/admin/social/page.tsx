@@ -43,9 +43,8 @@ export default async function SocialPage() {
   interface SocialToken {
     platform: string
     is_connected: boolean
-    platform_username?: string
-    platform_avatar_url?: string
-    expires_at?: string
+    account_name?: string
+    token_expires_at?: string
   }
   let tokens: SocialToken[] = []
   try {

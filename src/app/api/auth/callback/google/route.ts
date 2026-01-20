@@ -84,22 +84,26 @@ export async function GET(request: NextRequest) {
     const admin = createAdminClient()
     const expiresAt = new Date(Date.now() + (tokenData.expires_in || 3600) * 1000).toISOString()
 
-    await admin
+    const { error: upsertError } = await admin
       .from('social_tokens')
       .upsert({
         company_id: company.id,
         platform: 'google',
         access_token: tokenData.access_token,
         refresh_token: tokenData.refresh_token,
-        expires_at: expiresAt,
-        platform_user_id: account.name,
-        platform_username: account.accountName || 'Google Business',
-        page_id: locationName,
+        token_expires_at: expiresAt,
+        account_id: account.name,
+        account_name: account.accountName || 'Google Business',
         is_connected: true,
         updated_at: new Date().toISOString(),
       }, {
         onConflict: 'company_id,platform',
       })
+
+    if (upsertError) {
+      console.error('Google token save error:', upsertError)
+      return NextResponse.redirect(`${baseUrl}/admin/social?error=save_failed`)
+    }
 
     return NextResponse.redirect(`${baseUrl}/admin/social?success=google`)
   } catch (error) {

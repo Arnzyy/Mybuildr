@@ -115,23 +115,26 @@ export async function GET(request: NextRequest) {
     const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString()
 
     // Upsert social token
-    await admin
+    const { error: upsertError } = await admin
       .from('social_tokens')
       .upsert({
         company_id: company.id,
         platform: 'instagram',
         access_token: pageAccessToken,
         refresh_token: null, // Meta doesn't use refresh tokens
-        expires_at: expiresAt,
-        platform_user_id: instagramAccountId,
-        platform_username: igInfo.username,
-        platform_avatar_url: igInfo.profile_picture_url,
-        page_id: pageId,
+        token_expires_at: expiresAt,
+        account_id: instagramAccountId,
+        account_name: igInfo.username,
         is_connected: true,
         updated_at: new Date().toISOString(),
       }, {
         onConflict: 'company_id,platform',
       })
+
+    if (upsertError) {
+      console.error('Instagram token save error:', upsertError)
+      return NextResponse.redirect(`${baseUrl}/admin/social?error=save_failed`)
+    }
 
     // Enable posting for the company
     await admin

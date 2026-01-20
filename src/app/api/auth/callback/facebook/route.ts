@@ -83,22 +83,25 @@ export async function GET(request: NextRequest) {
 
     // Store token
     const admin = createAdminClient()
-    await admin
+    const { error: upsertError } = await admin
       .from('social_tokens')
       .upsert({
         company_id: company.id,
         platform: 'facebook',
         access_token: page.access_token,
-        expires_at: new Date(Date.now() + expiresIn * 1000).toISOString(),
-        platform_user_id: page.id,
-        platform_username: pageInfo.name,
-        platform_avatar_url: pageInfo.picture?.data?.url,
-        page_id: page.id,
+        token_expires_at: new Date(Date.now() + expiresIn * 1000).toISOString(),
+        account_id: page.id,
+        account_name: pageInfo.name,
         is_connected: true,
         updated_at: new Date().toISOString(),
       }, {
         onConflict: 'company_id,platform',
       })
+
+    if (upsertError) {
+      console.error('Facebook token save error:', upsertError)
+      return NextResponse.redirect(`${baseUrl}/admin/social?error=save_failed`)
+    }
 
     return NextResponse.redirect(`${baseUrl}/admin/social?success=facebook`)
   } catch (error) {
