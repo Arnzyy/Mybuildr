@@ -83,7 +83,15 @@ export async function GET(request: NextRequest) {
     )
     const pagesData = await pagesResponse.json()
 
+    console.log('Pages API response:', JSON.stringify(pagesData, null, 2))
+
+    if (pagesData.error) {
+      console.error('Pages API error:', pagesData.error)
+      return NextResponse.redirect(`${baseUrl}/admin/social?error=pages_api_error`)
+    }
+
     if (!pagesData.data || pagesData.data.length === 0) {
+      console.error('No pages found. Full response:', pagesData)
       return NextResponse.redirect(`${baseUrl}/admin/social?error=no_pages`)
     }
 
