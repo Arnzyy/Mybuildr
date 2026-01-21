@@ -70,15 +70,28 @@ export async function PUT(
 
     const admin = createAdminClient()
 
-    // Verify ownership
+    // Get existing project to check ownership and find removed images
     const { data: existing } = await admin
       .from('projects')
-      .select('company_id')
+      .select('*')
       .eq('id', id)
       .single()
 
     if (!existing || existing.company_id !== company.id) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    }
+
+    // Find images that were removed and delete them from R2
+    const oldImages: string[] = existing.images || []
+    const newImages: string[] = images || []
+    const removedImages = oldImages.filter(img => !newImages.includes(img))
+
+    for (const imageUrl of removedImages) {
+      try {
+        await deleteFromR2(imageUrl)
+      } catch (e) {
+        console.error('Failed to delete removed image:', imageUrl, e)
+      }
     }
 
     const { data: project, error } = await admin
