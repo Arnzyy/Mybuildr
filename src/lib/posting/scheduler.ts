@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import { generateCaption } from '@/lib/ai/captions'
-import { Company, MediaItem } from '@/lib/supabase/types'
+import { generateCaption, generateReviewCaption } from '@/lib/ai/captions'
+import { generateReviewGraphic } from '@/lib/graphics/review-graphic'
+import { Company, MediaItem, Review } from '@/lib/supabase/types'
 
 // UK timezone
 const UK_TIMEZONE = 'Europe/London'
@@ -109,6 +110,74 @@ async function updateMediaAfterScheduling(mediaId: string): Promise<void> {
   }
 }
 
+// Get next eligible review for posting
+async function getNextReview(companyId: string, minRating: number): Promise<Review | null> {
+  const supabase = createAdminClient()
+
+  // Get eligible reviews ordered by least-posted first
+  const { data: reviews } = await supabase
+    .from('reviews')
+    .select('*')
+    .eq('company_id', companyId)
+    .gte('rating', minRating)
+    .not('review_text', 'is', null)
+    .order('used_in_post', { ascending: true })
+    .order('last_posted_at', { ascending: true, nullsFirst: true })
+    .limit(10)
+
+  if (!reviews || reviews.length === 0) return null
+
+  // If all reviews have been posted, check for 30-day cooldown on least-recent
+  const unpostedReviews = reviews.filter(r => !r.used_in_post)
+  if (unpostedReviews.length > 0) {
+    // Pick a random unposted review
+    return unpostedReviews[Math.floor(Math.random() * unpostedReviews.length)] as Review
+  }
+
+  // All have been posted - check cooldown on oldest posted
+  const oldestPosted = reviews[0]
+  if (oldestPosted.last_posted_at) {
+    const daysSince = (Date.now() - new Date(oldestPosted.last_posted_at).getTime()) / (24 * 60 * 60 * 1000)
+    if (daysSince < 30) {
+      return null // All reviews on cooldown
+    }
+  }
+
+  return oldestPosted as Review
+}
+
+// Update review after scheduling
+async function updateReviewAfterScheduling(reviewId: string): Promise<void> {
+  const supabase = createAdminClient()
+
+  await supabase
+    .from('reviews')
+    .update({
+      used_in_post: true,
+      last_posted_at: new Date().toISOString(),
+    })
+    .eq('id', reviewId)
+}
+
+// Decide whether next post should be a review (roughly every 3rd post)
+async function shouldPostReview(companyId: string): Promise<boolean> {
+  const supabase = createAdminClient()
+
+  // Count recent posts to determine if we should post a review
+  const { data: recentPosts } = await supabase
+    .from('scheduled_posts')
+    .select('review_id')
+    .eq('company_id', companyId)
+    .order('created_at', { ascending: false })
+    .limit(3)
+
+  if (!recentPosts || recentPosts.length === 0) return false
+
+  // If last 2 posts were images (no review_id), next should be a review
+  const recentReviewCount = recentPosts.filter(p => p.review_id).length
+  return recentReviewCount === 0 && recentPosts.length >= 2
+}
+
 // Schedule a new post for a company
 export async function schedulePost(company: Company): Promise<{
   success: boolean
@@ -118,12 +187,6 @@ export async function schedulePost(company: Company): Promise<{
   const supabase = createAdminClient()
 
   try {
-    // Get next image from media library
-    const media = await getNextImage(company.id)
-    if (!media) {
-      return { success: false, error: 'No images available for posting' }
-    }
-
     // Get existing scheduled posts for slot calculation
     const { data: existingPosts } = await supabase
       .from('scheduled_posts')
@@ -133,16 +196,67 @@ export async function schedulePost(company: Company): Promise<{
       .gte('scheduled_for', new Date().toISOString())
 
     const existingSlots = (existingPosts || []).map(p => new Date(p.scheduled_for))
-
-    // Get next slot
     const scheduledFor = getNextPostingSlot(existingSlots, company.posts_per_week || 5)
+
+    // Decide whether to post a review or image
+    const postReview = company.review_posting_enabled && await shouldPostReview(company.id)
+
+    if (postReview) {
+      // Try to get a review to post
+      const review = await getNextReview(company.id, company.review_min_rating || 4)
+
+      if (review) {
+        // Generate review graphic if not already created
+        let graphicUrl = review.graphic_url
+        if (!graphicUrl) {
+          graphicUrl = await generateReviewGraphic(company, review)
+          // Save graphic URL to review
+          await supabase
+            .from('reviews')
+            .update({ graphic_url: graphicUrl })
+            .eq('id', review.id)
+        }
+
+        // Generate caption for review
+        const { caption, hashtags } = await generateReviewCaption(company, review)
+
+        // Create scheduled post for review
+        const { data: post, error } = await supabase
+          .from('scheduled_posts')
+          .insert({
+            company_id: company.id,
+            review_id: review.id,
+            image_url: graphicUrl,
+            caption,
+            hashtags,
+            scheduled_for: scheduledFor.toISOString(),
+            status: 'pending',
+          })
+          .select()
+          .single()
+
+        if (error) {
+          console.error('Failed to create review post:', error)
+          // Fall through to try image post
+        } else {
+          await updateReviewAfterScheduling(review.id)
+          return { success: true, postId: post.id }
+        }
+      }
+    }
+
+    // Post an image (default or fallback)
+    const media = await getNextImage(company.id)
+    if (!media) {
+      return { success: false, error: 'No images available for posting' }
+    }
 
     // Generate caption using media item
     const { caption, hashtags } = await generateCaption(
       company,
-      null, // No project
-      media, // Use media item
-      'instagram' // Default platform
+      null,
+      media,
+      'instagram'
     )
 
     // Create scheduled post
@@ -166,9 +280,7 @@ export async function schedulePost(company: Company): Promise<{
       return { success: false, error: 'Failed to schedule post' }
     }
 
-    // Update media item tracking
     await updateMediaAfterScheduling(media.id)
-
     return { success: true, postId: post.id }
   } catch (error) {
     console.error('Schedule post error:', error)

@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { Company, Project, MediaItem } from '@/lib/supabase/types'
+import { Company, Project, MediaItem, Review } from '@/lib/supabase/types'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -223,4 +223,116 @@ export async function generateCaptionVariants(
   }
 
   return variants
+}
+
+// Generate caption for a review post
+export async function generateReviewCaption(
+  company: Company,
+  review: Review,
+  platform: Platform = 'instagram'
+): Promise<GeneratedCaption> {
+  const stars = '⭐'.repeat(review.rating)
+  const reviewerName = review.reviewer_name || 'Happy Customer'
+  const reviewText = review.review_text || ''
+  const truncatedReview = reviewText.length > 100 ? reviewText.substring(0, 100) + '...' : reviewText
+
+  // Build custom guidelines section
+  const customGuidelines = company.caption_guidelines
+    ? `\n\nAdditional guidelines from the business owner:\n${company.caption_guidelines}`
+    : ''
+
+  const prompt = `You are a social media manager for a ${company.trade_type || 'construction'} company called "${company.name}" based in ${company.city || 'the UK'}.
+
+Write a short caption to share this customer review:
+- Rating: ${review.rating}/5 stars
+- Customer: ${reviewerName}
+- Review: "${truncatedReview}"
+${review.source && review.source !== 'manual' ? `- Source: ${review.source}` : ''}
+
+CRITICAL RULES:
+1. Keep it SHORT - max 2 sentences before the review excerpt
+2. Express genuine gratitude for the feedback
+3. DON'T repeat the entire review - just reference it
+4. Sound authentic, not corporate
+5. Include a subtle call to action
+6. Don't use emojis excessively (1-2 max)${customGuidelines}
+
+Provide 4-6 relevant hashtags for the UK construction/trades market.
+
+Respond in this exact JSON format:
+{
+  "caption": "Your caption here",
+  "hashtags": ["hashtag1", "hashtag2"]
+}
+
+Only respond with the JSON, nothing else.`
+
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 300,
+      messages: [
+        { role: 'user', content: prompt }
+      ],
+    })
+
+    const text = response.content[0].type === 'text'
+      ? response.content[0].text
+      : ''
+
+    const parsed = JSON.parse(text)
+
+    // Get sign-off (same logic as regular captions)
+    let signoff = ''
+    if (company.caption_signoff_enabled !== false) {
+      if (platform === 'instagram' && company.caption_signoff_instagram) {
+        signoff = company.caption_signoff_instagram
+      } else if (platform === 'facebook' && company.caption_signoff_facebook) {
+        signoff = company.caption_signoff_facebook
+      } else if (platform === 'google' && company.caption_signoff_google) {
+        signoff = company.caption_signoff_google
+      } else {
+        signoff = generateDefaultSignoff(company, platform)
+      }
+    }
+
+    let finalCaption = parsed.caption
+    if (signoff) {
+      finalCaption = `${finalCaption}\n\n${signoff}`
+    }
+
+    const generatedHashtags = parsed.hashtags.map((h: string) => h.replace('#', ''))
+    const customHashtags = company.hashtag_preferences || []
+    const allHashtags = [...new Set([...generatedHashtags, ...customHashtags, 'customerreview', 'testimonial'])]
+
+    return {
+      caption: finalCaption,
+      hashtags: allHashtags,
+    }
+  } catch (error) {
+    console.error('Review caption generation failed:', error)
+
+    // Fallback caption
+    let signoff = ''
+    if (company.caption_signoff_enabled !== false) {
+      signoff = generateDefaultSignoff(company, platform)
+    }
+
+    let fallbackCaption = `${stars} Another happy customer! Thank you ${reviewerName} for the wonderful feedback. We love hearing from our customers!`
+    if (signoff) {
+      fallbackCaption = `${fallbackCaption}\n\n${signoff}`
+    }
+
+    return {
+      caption: fallbackCaption,
+      hashtags: [
+        'customerreview',
+        'testimonial',
+        'happycustomer',
+        company.trade_type?.toLowerCase().replace(/\s+/g, '') || 'construction',
+        company.city?.toLowerCase().replace(/\s+/g, '') || 'local',
+        ...(company.hashtag_preferences || []),
+      ],
+    }
+  }
 }

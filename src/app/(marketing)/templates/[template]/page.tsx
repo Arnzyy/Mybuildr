@@ -46,6 +46,8 @@ const PREVIEW_COMPANY: Company = {
   caption_signoff_facebook: null,
   caption_signoff_google: null,
   hashtag_preferences: null,
+  review_posting_enabled: true,
+  review_min_rating: 4,
 }
 
 const PREVIEW_PROJECTS: Project[] = [

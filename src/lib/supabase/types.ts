@@ -53,6 +53,9 @@ export interface Company {
   caption_signoff_facebook: string | null
   caption_signoff_google: string | null
   hashtag_preferences: string[] | null
+  // Review Posting Settings
+  review_posting_enabled: boolean
+  review_min_rating: number
 }
 
 export interface Project {
@@ -79,6 +82,7 @@ export interface ScheduledPost {
   company_id: string
   project_id: string | null
   media_id: string | null
+  review_id: string | null
   image_url: string
   caption: string | null
   hashtags: string[] | null

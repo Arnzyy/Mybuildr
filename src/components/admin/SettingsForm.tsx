@@ -38,6 +38,9 @@ export default function SettingsForm({ company }: SettingsFormProps) {
     caption_signoff_facebook: company.caption_signoff_facebook || '',
     caption_signoff_google: company.caption_signoff_google || '',
     hashtag_preferences: company.hashtag_preferences?.join(', ') || '',
+    // Review Posting Settings
+    review_posting_enabled: company.review_posting_enabled ?? true,
+    review_min_rating: company.review_min_rating ?? 4,
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -286,23 +289,71 @@ export default function SettingsForm({ company }: SettingsFormProps) {
       <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
         <h2 className="font-semibold text-gray-900 mb-6">Posting Settings</h2>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Posts per week
-          </label>
-          <select
-            name="posts_per_week"
-            value={formData.posts_per_week}
-            onChange={handleChange}
-            className="w-full sm:w-48 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-          >
-            <option value={3}>3 posts per week</option>
-            <option value={5}>5 posts per week</option>
-            <option value={7}>7 posts per week (daily)</option>
-          </select>
-          <p className="text-xs text-gray-500 mt-2">
-            How often we auto-post your project photos to social media
-          </p>
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Posts per week
+            </label>
+            <select
+              name="posts_per_week"
+              value={formData.posts_per_week}
+              onChange={handleChange}
+              className="w-full sm:w-48 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            >
+              <option value={3}>3 posts per week</option>
+              <option value={5}>5 posts per week</option>
+              <option value={7}>7 posts per week (daily)</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-2">
+              How often we auto-post your project photos to social media
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div>
+              <p className="font-medium text-gray-900">Auto-post Reviews</p>
+              <p className="text-sm text-gray-500">
+                Automatically create and post review graphics
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setFormData(prev => ({ ...prev, review_posting_enabled: !prev.review_posting_enabled }))
+                setSaved(false)
+              }}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                formData.review_posting_enabled ? 'bg-orange-500' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  formData.review_posting_enabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
+          {formData.review_posting_enabled && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Minimum Rating for Reviews
+              </label>
+              <select
+                name="review_min_rating"
+                value={formData.review_min_rating}
+                onChange={handleChange}
+                className="w-full sm:w-48 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              >
+                <option value={5}>5 stars only</option>
+                <option value={4}>4+ stars</option>
+                <option value={3}>3+ stars</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-2">
+                Only reviews with this rating or higher will be posted
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
