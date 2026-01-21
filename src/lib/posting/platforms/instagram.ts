@@ -29,7 +29,7 @@ export async function postToInstagram(
   try {
     // Step 1: Create media container
     const containerResponse = await fetch(
-      `https://graph.facebook.com/v18.0/${token.platform_user_id}/media`,
+      `https://graph.facebook.com/v18.0/${token.account_id}/media`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -76,7 +76,7 @@ export async function postToInstagram(
 
     // Step 3: Publish the container
     const publishResponse = await fetch(
-      `https://graph.facebook.com/v18.0/${token.platform_user_id}/media_publish`,
+      `https://graph.facebook.com/v18.0/${token.account_id}/media_publish`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

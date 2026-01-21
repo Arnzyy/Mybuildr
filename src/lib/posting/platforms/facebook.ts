@@ -28,7 +28,7 @@ export async function postToFacebook(
   try {
     // Post photo to page
     const response = await fetch(
-      `https://graph.facebook.com/v18.0/${token.page_id}/photos`,
+      `https://graph.facebook.com/v18.0/${token.account_id}/photos`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
