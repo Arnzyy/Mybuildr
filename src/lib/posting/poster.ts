@@ -113,7 +113,7 @@ export async function processScheduledPost(postId: string): Promise<boolean> {
     })
     .eq('id', postId)
 
-  // Mark image as used
+  // Mark image as used (projects table - legacy)
   if (anySuccess && post.project_id) {
     await supabase
       .from('projects')
@@ -122,6 +122,17 @@ export async function processScheduledPost(postId: string): Promise<boolean> {
         last_posted_at: new Date().toISOString(),
       })
       .eq('id', post.project_id)
+  }
+
+  // Update media library tracking when post succeeds
+  if (anySuccess && post.media_id) {
+    await supabase
+      .from('media_library')
+      .update({
+        last_posted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', post.media_id)
   }
 
   return anySuccess

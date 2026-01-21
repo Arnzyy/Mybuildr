@@ -46,6 +46,12 @@ export interface Company {
   custom_domain: string | null
   is_active: boolean
   is_published: boolean
+  // AI Caption Settings
+  caption_guidelines: string | null
+  caption_signoff_instagram: string | null
+  caption_signoff_facebook: string | null
+  caption_signoff_google: string | null
+  hashtag_preferences: string[] | null
 }
 
 export interface Project {
@@ -71,6 +77,7 @@ export interface ScheduledPost {
   created_at: string
   company_id: string
   project_id: string | null
+  media_id: string | null
   image_url: string
   caption: string | null
   hashtags: string[] | null
@@ -82,6 +89,22 @@ export interface ScheduledPost {
   google_post_id: string | null
   error_message: string | null
   retry_count: number
+}
+
+export interface MediaItem {
+  id: string
+  created_at: string
+  updated_at: string
+  company_id: string
+  image_url: string
+  title: string | null
+  description: string | null
+  location: string | null
+  work_type: string | null
+  times_posted: number
+  last_posted_at: string | null
+  is_available: boolean
+  source_project_id: string | null
 }
 
 export interface Review {

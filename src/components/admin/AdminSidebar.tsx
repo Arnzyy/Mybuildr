@@ -14,7 +14,8 @@ import {
   CreditCard,
   ExternalLink,
   Lock,
-  LogOut
+  LogOut,
+  Image
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -50,6 +51,12 @@ export default function AdminSidebar({ company }: AdminSidebarProps) {
       href: '/admin/projects',
       label: 'Projects',
       icon: FolderOpen,
+      requiredFeature: 'upload_projects',
+    },
+    {
+      href: '/admin/media',
+      label: 'Media Library',
+      icon: Image,
       requiredFeature: 'upload_projects',
     },
     {

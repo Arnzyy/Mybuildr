@@ -1,6 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateCaption } from '@/lib/ai/captions'
-import { Company, Project } from '@/lib/supabase/types'
+import { Company, MediaItem } from '@/lib/supabase/types'
 
 // UK timezone
 const UK_TIMEZONE = 'Europe/London'
@@ -53,60 +53,60 @@ function getNextPostingSlot(
   return fallback
 }
 
-// Get an unused image from company's projects
-async function getUnusedImage(companyId: string): Promise<{
-  project: Project
-  imageUrl: string
-  imageIndex: number
-} | null> {
+// Get next available image from media library using rotation logic
+async function getNextImage(companyId: string): Promise<MediaItem | null> {
   const supabase = createAdminClient()
 
-  // Get all projects with images
-  const { data: projects } = await supabase
-    .from('projects')
+  // Get available media items, ordered by times_posted (ascending) and last_posted_at (ascending, nulls first)
+  const { data: media } = await supabase
+    .from('media_library')
     .select('*')
     .eq('company_id', companyId)
-    .order('created_at', { ascending: false })
+    .eq('is_available', true)
+    .order('times_posted', { ascending: true })
+    .order('last_posted_at', { ascending: true, nullsFirst: true })
+    .limit(10)
 
-  if (!projects || projects.length === 0) return null
+  if (!media || media.length === 0) return null
 
-  // Find an image that hasn't been posted recently
-  for (const project of projects) {
-    if (!project.images || project.images.length === 0) continue
-
-    for (let i = 0; i < project.images.length; i++) {
-      const imageUrl = project.images[i]
-
-      // Check if this image was posted in the last 30 days
-      const { data: recentPost } = await supabase
-        .from('scheduled_posts')
-        .select('id')
-        .eq('image_url', imageUrl)
-        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-        .single()
-
-      if (!recentPost) {
-        return {
-          project: project as Project,
-          imageUrl,
-          imageIndex: i,
-        }
-      }
+  // If only 1 image, check 14-day cooldown
+  if (media.length === 1 && media[0].last_posted_at) {
+    const daysSinceLastPost = (Date.now() - new Date(media[0].last_posted_at).getTime()) / (24 * 60 * 60 * 1000)
+    if (daysSinceLastPost < 14) {
+      // Skip - wait for cooldown period
+      return null
     }
   }
 
-  // If all images used recently, pick random one
-  const randomProject = projects[Math.floor(Math.random() * projects.length)]
-  if (randomProject.images && randomProject.images.length > 0) {
-    const randomIndex = Math.floor(Math.random() * randomProject.images.length)
-    return {
-      project: randomProject as Project,
-      imageUrl: randomProject.images[randomIndex],
-      imageIndex: randomIndex,
-    }
-  }
+  // Pick from least-posted images (those with the same minimum times_posted)
+  const minPosted = media[0].times_posted
+  const candidates = media.filter(m => m.times_posted === minPosted)
+  const selected = candidates[Math.floor(Math.random() * candidates.length)]
 
-  return null
+  return selected as MediaItem
+}
+
+// Update media item after scheduling
+async function updateMediaAfterScheduling(mediaId: string): Promise<void> {
+  const supabase = createAdminClient()
+
+  // Get current times_posted
+  const { data: media } = await supabase
+    .from('media_library')
+    .select('times_posted')
+    .eq('id', mediaId)
+    .single()
+
+  if (media) {
+    await supabase
+      .from('media_library')
+      .update({
+        times_posted: (media.times_posted || 0) + 1,
+        last_posted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', mediaId)
+  }
 }
 
 // Schedule a new post for a company
@@ -118,9 +118,9 @@ export async function schedulePost(company: Company): Promise<{
   const supabase = createAdminClient()
 
   try {
-    // Get unused image
-    const imageData = await getUnusedImage(company.id)
-    if (!imageData) {
+    // Get next image from media library
+    const media = await getNextImage(company.id)
+    if (!media) {
       return { success: false, error: 'No images available for posting' }
     }
 
@@ -137,11 +137,12 @@ export async function schedulePost(company: Company): Promise<{
     // Get next slot
     const scheduledFor = getNextPostingSlot(existingSlots, company.posts_per_week || 5)
 
-    // Generate caption
+    // Generate caption using media item
     const { caption, hashtags } = await generateCaption(
       company,
-      imageData.project,
-      imageData.imageIndex
+      null, // No project
+      media, // Use media item
+      'instagram' // Default platform
     )
 
     // Create scheduled post
@@ -149,8 +150,9 @@ export async function schedulePost(company: Company): Promise<{
       .from('scheduled_posts')
       .insert({
         company_id: company.id,
-        project_id: imageData.project.id,
-        image_url: imageData.imageUrl,
+        project_id: media.source_project_id || null,
+        media_id: media.id,
+        image_url: media.image_url,
         caption,
         hashtags,
         scheduled_for: scheduledFor.toISOString(),
@@ -163,6 +165,9 @@ export async function schedulePost(company: Company): Promise<{
       console.error('Failed to create scheduled post:', error)
       return { success: false, error: 'Failed to schedule post' }
     }
+
+    // Update media item tracking
+    await updateMediaAfterScheduling(media.id)
 
     return { success: true, postId: post.id }
   } catch (error) {

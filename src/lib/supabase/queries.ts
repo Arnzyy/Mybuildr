@@ -1,5 +1,5 @@
 import { createAdminClient } from './admin'
-import type { Company, Project, Review } from './types'
+import type { Company, Project, Review, MediaItem } from './types'
 
 // Get company by slug (for builder sites)
 export async function getCompanyBySlug(slug: string): Promise<Company | null> {
@@ -110,4 +110,18 @@ export async function updateCompany(
     .eq('id', companyId)
 
   return { error }
+}
+
+// Get media library items for a company
+export async function getCompanyMedia(companyId: string): Promise<MediaItem[]> {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from('media_library')
+    .select('*')
+    .eq('company_id', companyId)
+    .order('created_at', { ascending: false })
+
+  if (error || !data) return []
+  return data as MediaItem[]
 }

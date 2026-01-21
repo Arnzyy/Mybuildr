@@ -31,6 +31,12 @@ export default function SettingsForm({ company }: SettingsFormProps) {
     primary_color: company.primary_color,
     secondary_color: company.secondary_color,
     posts_per_week: company.posts_per_week || 5,
+    // AI Caption Settings
+    caption_guidelines: company.caption_guidelines || '',
+    caption_signoff_instagram: company.caption_signoff_instagram || '',
+    caption_signoff_facebook: company.caption_signoff_facebook || '',
+    caption_signoff_google: company.caption_signoff_google || '',
+    hashtag_preferences: company.hashtag_preferences?.join(', ') || '',
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -56,6 +62,7 @@ export default function SettingsForm({ company }: SettingsFormProps) {
             services: formData.services.split(',').map(s => s.trim()).filter(Boolean),
             areas_covered: formData.areas_covered.split(',').map(s => s.trim()).filter(Boolean),
             posts_per_week: Number(formData.posts_per_week),
+            hashtag_preferences: formData.hashtag_preferences.split(',').map(s => s.trim().replace(/^#/, '')).filter(Boolean),
           }
         }),
       })
@@ -295,6 +302,94 @@ export default function SettingsForm({ company }: SettingsFormProps) {
           <p className="text-xs text-gray-500 mt-2">
             How often we auto-post your project photos to social media
           </p>
+        </div>
+      </div>
+
+      {/* AI Caption Settings */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+        <h2 className="font-semibold text-gray-900 mb-6">AI Caption Settings</h2>
+
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Caption Guidelines
+            </label>
+            <textarea
+              name="caption_guidelines"
+              value={formData.caption_guidelines}
+              onChange={handleChange}
+              rows={4}
+              placeholder="e.g. Keep it professional, mention quality workmanship, avoid slang, always mention we're a family-run business..."
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Tell the AI how to write your captions - tone, style, what to include/avoid
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Sign-off - Instagram
+              </label>
+              <input
+                type="text"
+                name="caption_signoff_instagram"
+                value={formData.caption_signoff_instagram}
+                onChange={handleChange}
+                placeholder="e.g. Contact us: 01234 567890 | www.example.com"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Sign-off - Facebook
+              </label>
+              <input
+                type="text"
+                name="caption_signoff_facebook"
+                value={formData.caption_signoff_facebook}
+                onChange={handleChange}
+                placeholder="e.g. Contact us: 01234 567890 | www.example.com"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Sign-off - Google Business
+              </label>
+              <input
+                type="text"
+                name="caption_signoff_google"
+                value={formData.caption_signoff_google}
+                onChange={handleChange}
+                placeholder="e.g. Contact us: 01234 567890 | www.example.com"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-gray-500">
+            This text will be added at the end of every caption on each platform
+          </p>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Custom Hashtags (comma separated)
+            </label>
+            <input
+              type="text"
+              name="hashtag_preferences"
+              value={formData.hashtag_preferences}
+              onChange={handleChange}
+              placeholder="e.g. yourbrand, yourarea, yourspecialty"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              These hashtags will always be included in your posts (without #)
+            </p>
+          </div>
         </div>
       </div>
 
