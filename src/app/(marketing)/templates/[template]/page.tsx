@@ -40,6 +40,11 @@ const PREVIEW_COMPANY: Company = {
   custom_domain: null,
   is_active: true,
   is_published: true,
+  caption_guidelines: null,
+  caption_signoff_instagram: null,
+  caption_signoff_facebook: null,
+  caption_signoff_google: null,
+  hashtag_preferences: null,
 }
 
 const PREVIEW_PROJECTS: Project[] = [
