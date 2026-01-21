@@ -48,6 +48,7 @@ export interface Company {
   is_published: boolean
   // AI Caption Settings
   caption_guidelines: string | null
+  caption_signoff_enabled: boolean
   caption_signoff_instagram: string | null
   caption_signoff_facebook: string | null
   caption_signoff_google: string | null

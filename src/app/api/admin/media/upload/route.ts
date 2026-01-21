@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getCompanyForUser } from '@/lib/supabase/queries'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { uploadToR2 } from '@/lib/r2/client'
+import { uploadToR2, createUploadParams } from '@/lib/r2/client'
 import { hasFeature } from '@/lib/features'
 
 export async function POST(request: NextRequest) {
@@ -46,7 +46,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Upload to R2
-    const imageUrl = await uploadToR2(file, company.slug)
+    const { filename } = createUploadParams(file.name, company.slug)
+    const buffer = Buffer.from(await file.arrayBuffer())
+    const imageUrl = await uploadToR2(buffer, filename, file.type)
 
     // Create media library entry
     const admin = createAdminClient()

@@ -33,6 +33,7 @@ export default function SettingsForm({ company }: SettingsFormProps) {
     posts_per_week: company.posts_per_week || 5,
     // AI Caption Settings
     caption_guidelines: company.caption_guidelines || '',
+    caption_signoff_enabled: company.caption_signoff_enabled ?? true,
     caption_signoff_instagram: company.caption_signoff_instagram || '',
     caption_signoff_facebook: company.caption_signoff_facebook || '',
     caption_signoff_google: company.caption_signoff_google || '',
@@ -327,52 +328,81 @@ export default function SettingsForm({ company }: SettingsFormProps) {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-4">
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sign-off - Instagram
-              </label>
-              <input
-                type="text"
-                name="caption_signoff_instagram"
-                value={formData.caption_signoff_instagram}
-                onChange={handleChange}
-                placeholder="e.g. Contact us: 01234 567890 | www.example.com"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-              />
+              <p className="font-medium text-gray-900">Caption Sign-off</p>
+              <p className="text-sm text-gray-500">
+                Add your contact info at the end of each caption
+              </p>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sign-off - Facebook
-              </label>
-              <input
-                type="text"
-                name="caption_signoff_facebook"
-                value={formData.caption_signoff_facebook}
-                onChange={handleChange}
-                placeholder="e.g. Contact us: 01234 567890 | www.example.com"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            <button
+              type="button"
+              onClick={() => {
+                setFormData(prev => ({ ...prev, caption_signoff_enabled: !prev.caption_signoff_enabled }))
+                setSaved(false)
+              }}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                formData.caption_signoff_enabled ? 'bg-orange-500' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  formData.caption_signoff_enabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sign-off - Google Business
-              </label>
-              <input
-                type="text"
-                name="caption_signoff_google"
-                value={formData.caption_signoff_google}
-                onChange={handleChange}
-                placeholder="e.g. Contact us: 01234 567890 | www.example.com"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-              />
-            </div>
+            </button>
           </div>
-          <p className="text-xs text-gray-500">
-            This text will be added at the end of every caption on each platform
-          </p>
+
+          {formData.caption_signoff_enabled && (
+            <>
+              <p className="text-sm text-gray-600">
+                Leave fields empty to auto-generate from your business info (name, phone, city)
+              </p>
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Sign-off - Instagram
+                  </label>
+                  <input
+                    type="text"
+                    name="caption_signoff_instagram"
+                    value={formData.caption_signoff_instagram}
+                    onChange={handleChange}
+                    placeholder="Leave empty for auto-generated, or enter custom text"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Sign-off - Facebook
+                  </label>
+                  <input
+                    type="text"
+                    name="caption_signoff_facebook"
+                    value={formData.caption_signoff_facebook}
+                    onChange={handleChange}
+                    placeholder="Leave empty for auto-generated, or enter custom text"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Sign-off - Google Business
+                  </label>
+                  <input
+                    type="text"
+                    name="caption_signoff_google"
+                    value={formData.caption_signoff_google}
+                    onChange={handleChange}
+                    placeholder="Leave empty for auto-generated, or enter custom text"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  />
+                </div>
+              </div>
+            </>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
