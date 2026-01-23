@@ -7,10 +7,11 @@ import Link from 'next/link'
 import PostsList from '@/components/admin/PostsList'
 import PostsTimeline from '@/components/admin/PostsTimeline'
 import PostsViewToggle from '@/components/admin/PostsViewToggle'
+import PostsStatusFilter from '@/components/admin/PostsStatusFilter'
 import GeneratePostsButton from '@/components/admin/GeneratePostsButton'
 import { Lock, Calendar, Zap } from 'lucide-react'
 
-export default async function PostsPage({ searchParams }: { searchParams: { view?: string } }) {
+export default async function PostsPage({ searchParams }: { searchParams: { view?: string; status?: string } }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -21,6 +22,7 @@ export default async function PostsPage({ searchParams }: { searchParams: { view
 
   const canViewPosts = hasFeature(company.tier, 'view_scheduled_posts')
   const view = searchParams.view || 'list'
+  const statusFilter = searchParams.status || 'all'
 
   if (!canViewPosts) {
     return (
@@ -59,6 +61,11 @@ export default async function PostsPage({ searchParams }: { searchParams: { view
   const pendingCount = posts?.filter(p => p.status === 'pending').length || 0
   const postedCount = posts?.filter(p => p.status === 'posted').length || 0
   const failedCount = posts?.filter(p => p.status === 'failed').length || 0
+
+  // Filter posts based on status
+  const filteredPosts = statusFilter === 'all'
+    ? posts
+    : posts?.filter(p => p.status === statusFilter)
 
   return (
     <div>
@@ -151,16 +158,27 @@ export default async function PostsPage({ searchParams }: { searchParams: { view
         </div>
       )}
 
+      {/* Status filter tabs */}
+      {posts && posts.length > 0 && <PostsStatusFilter />}
+
       {/* View toggle */}
       {posts && posts.length > 0 && <PostsViewToggle />}
 
       {/* Posts list or timeline */}
-      {posts && posts.length > 0 ? (
+      {filteredPosts && filteredPosts.length > 0 ? (
         view === 'timeline' ? (
-          <PostsTimeline initialPosts={posts} />
+          <PostsTimeline initialPosts={filteredPosts} />
         ) : (
-          <PostsList initialPosts={posts} />
+          <PostsList initialPosts={filteredPosts} />
         )
+      ) : posts && posts.length > 0 ? (
+        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+          <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">No {statusFilter} posts</h2>
+          <p className="text-gray-600">
+            Try selecting a different filter or add more content.
+          </p>
+        </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
           <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
