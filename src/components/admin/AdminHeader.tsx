@@ -12,12 +12,9 @@ import {
   LogOut,
   LayoutDashboard,
   Settings,
-  FolderOpen,
-  Image,
+  Camera,
   Calendar,
   Share2,
-  Star,
-  CreditCard,
   ExternalLink,
   Lock
 } from 'lucide-react'
@@ -41,13 +38,10 @@ export default function AdminHeader({ company }: AdminHeaderProps) {
 
   const navItems = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, requiredFeature: null },
+    { href: '/admin/photos', label: 'My Photos', icon: Camera, requiredFeature: 'upload_projects' },
+    { href: '/admin/posts', label: 'Posts', icon: Calendar, requiredFeature: 'view_scheduled_posts' },
+    { href: '/admin/social', label: 'Socials', icon: Share2, requiredFeature: 'social_connections' },
     { href: '/admin/settings', label: 'Settings', icon: Settings, requiredFeature: null },
-    { href: '/admin/projects', label: 'Projects', icon: FolderOpen, requiredFeature: 'upload_projects' },
-    { href: '/admin/media', label: 'Media Library', icon: Image, requiredFeature: 'upload_projects' },
-    { href: '/admin/posts', label: 'Scheduled Posts', icon: Calendar, requiredFeature: 'view_scheduled_posts' },
-    { href: '/admin/social', label: 'Social Accounts', icon: Share2, requiredFeature: 'social_connections' },
-    { href: '/admin/reviews', label: 'Reviews', icon: Star, requiredFeature: null },
-    { href: '/admin/billing', label: 'Billing', icon: CreditCard, requiredFeature: null },
   ]
 
   return (

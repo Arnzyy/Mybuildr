@@ -7,15 +7,12 @@ import { hasFeature } from '@/lib/features'
 import {
   LayoutDashboard,
   Settings,
-  FolderOpen,
+  Camera,
   Calendar,
   Share2,
-  Star,
-  CreditCard,
   ExternalLink,
   Lock,
-  LogOut,
-  Image
+  LogOut
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -42,45 +39,27 @@ export default function AdminSidebar({ company }: AdminSidebarProps) {
       requiredFeature: null,
     },
     {
-      href: '/admin/settings',
-      label: 'Settings',
-      icon: Settings,
-      requiredFeature: null,
-    },
-    {
-      href: '/admin/projects',
-      label: 'Projects',
-      icon: FolderOpen,
-      requiredFeature: 'upload_projects',
-    },
-    {
-      href: '/admin/media',
-      label: 'Media Library',
-      icon: Image,
+      href: '/admin/photos',
+      label: 'My Photos',
+      icon: Camera,
       requiredFeature: 'upload_projects',
     },
     {
       href: '/admin/posts',
-      label: 'Scheduled Posts',
+      label: 'Posts',
       icon: Calendar,
       requiredFeature: 'view_scheduled_posts',
     },
     {
       href: '/admin/social',
-      label: 'Social Accounts',
+      label: 'Socials',
       icon: Share2,
       requiredFeature: 'social_connections',
     },
     {
-      href: '/admin/reviews',
-      label: 'Reviews',
-      icon: Star,
-      requiredFeature: null,
-    },
-    {
-      href: '/admin/billing',
-      label: 'Billing',
-      icon: CreditCard,
+      href: '/admin/settings',
+      label: 'Settings',
+      icon: Settings,
       requiredFeature: null,
     },
   ]
