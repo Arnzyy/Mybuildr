@@ -300,12 +300,21 @@ export default function SettingsForm({ company }: SettingsFormProps) {
               onChange={handleChange}
               className="w-full sm:w-48 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             >
-              <option value={3}>3 posts per week</option>
-              <option value={5}>5 posts per week</option>
-              <option value={7}>7 posts per week (daily)</option>
+              <optgroup label="Weekly">
+                <option value={1}>1x per week</option>
+                <option value={2}>2x per week</option>
+                <option value={3}>3x per week</option>
+                <option value={5}>5x per week (Recommended)</option>
+                <option value={7}>7x per week</option>
+              </optgroup>
+              <optgroup label="Daily">
+                <option value={7}>1x per day (7/week)</option>
+                <option value={14}>2x per day (14/week)</option>
+                <option value={21}>3x per day (21/week) - MAX</option>
+              </optgroup>
             </select>
             <p className="text-xs text-gray-500 mt-2">
-              How often we auto-post your project photos to social media
+              How often we auto-post to social media. We use 3 daily time slots (8am, 12pm, 6pm UK time) and rotate through your media library.
             </p>
           </div>
 

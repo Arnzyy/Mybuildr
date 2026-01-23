@@ -5,10 +5,12 @@ import { redirect } from 'next/navigation'
 import { hasFeature } from '@/lib/features'
 import Link from 'next/link'
 import PostsList from '@/components/admin/PostsList'
+import PostsTimeline from '@/components/admin/PostsTimeline'
+import PostsViewToggle from '@/components/admin/PostsViewToggle'
 import GeneratePostsButton from '@/components/admin/GeneratePostsButton'
 import { Lock, Calendar, Zap } from 'lucide-react'
 
-export default async function PostsPage() {
+export default async function PostsPage({ searchParams }: { searchParams: { view?: string } }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -18,6 +20,7 @@ export default async function PostsPage() {
   if (!company) redirect('/login')
 
   const canViewPosts = hasFeature(company.tier, 'view_scheduled_posts')
+  const view = searchParams.view || 'list'
 
   if (!canViewPosts) {
     return (
@@ -80,7 +83,11 @@ export default async function PostsPage() {
           <div>
             <p className="font-medium text-blue-900">Posting frequency</p>
             <p className="text-sm text-blue-700">
-              Currently posting <strong>{company.posts_per_week || 5}x per week</strong> across connected platforms
+              Currently posting <strong>
+                {company.posts_per_week >= 14
+                  ? `${Math.floor(company.posts_per_week / 7)}x per day`
+                  : `${company.posts_per_week || 5}x per week`}
+              </strong> across connected platforms
             </p>
           </div>
           <Link
@@ -144,9 +151,16 @@ export default async function PostsPage() {
         </div>
       )}
 
-      {/* Posts list */}
+      {/* View toggle */}
+      {posts && posts.length > 0 && <PostsViewToggle />}
+
+      {/* Posts list or timeline */}
       {posts && posts.length > 0 ? (
-        <PostsList initialPosts={posts} />
+        view === 'timeline' ? (
+          <PostsTimeline initialPosts={posts} />
+        ) : (
+          <PostsList initialPosts={posts} />
+        )
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
           <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
