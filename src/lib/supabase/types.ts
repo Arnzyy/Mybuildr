@@ -84,6 +84,7 @@ export interface ScheduledPost {
   media_id: string | null
   review_id: string | null
   image_url: string
+  media_type: 'image' | 'video'
   caption: string | null
   hashtags: string[] | null
   scheduled_for: string
@@ -102,6 +103,7 @@ export interface MediaItem {
   updated_at: string
   company_id: string
   image_url: string
+  media_type: 'image' | 'video'
   title: string | null
   description: string | null
   location: string | null

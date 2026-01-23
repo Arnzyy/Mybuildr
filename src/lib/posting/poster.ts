@@ -60,7 +60,12 @@ export async function processScheduledPost(postId: string): Promise<boolean> {
 
   // Post to each connected platform
   if (connectedPlatforms.includes('instagram')) {
-    const result = await postToInstagram(post.company_id, post.image_url, fullCaption)
+    const result = await postToInstagram(
+      post.company_id,
+      post.image_url,
+      fullCaption,
+      post.media_type || 'image'
+    )
     results.push({ platform: 'instagram', ...result })
 
     if (result.success && result.postId) {

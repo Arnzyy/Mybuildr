@@ -9,7 +9,8 @@ interface PostResult {
 export async function postToInstagram(
   companyId: string,
   imageUrl: string,
-  caption: string
+  caption: string,
+  mediaType: 'image' | 'video' = 'image'
 ): Promise<PostResult> {
   const supabase = createAdminClient()
 
@@ -28,16 +29,25 @@ export async function postToInstagram(
 
   try {
     // Step 1: Create media container
+    const mediaParams = mediaType === 'video'
+      ? {
+          video_url: imageUrl,
+          media_type: 'VIDEO',
+          caption,
+          access_token: token.access_token,
+        }
+      : {
+          image_url: imageUrl,
+          caption,
+          access_token: token.access_token,
+        }
+
     const containerResponse = await fetch(
       `https://graph.facebook.com/v18.0/${token.account_id}/media`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          image_url: imageUrl,
-          caption,
-          access_token: token.access_token,
-        }),
+        body: JSON.stringify(mediaParams),
       }
     )
 
@@ -51,9 +61,11 @@ export async function postToInstagram(
     const containerId = containerData.id
 
     // Step 2: Wait for container to be ready (poll status)
+    // Videos take longer to process, so use more attempts
+    const maxAttempts = mediaType === 'video' ? 30 : 10
     let ready = false
     let attempts = 0
-    while (!ready && attempts < 10) {
+    while (!ready && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 2000))
 
       const statusResponse = await fetch(

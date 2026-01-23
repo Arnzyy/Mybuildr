@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, isSameDay } from 'date-fns'
 import { Calendar, Check, X, AlertCircle, Edit2, Trash2 } from 'lucide-react'
+import MediaPreview from './MediaPreview'
 
 interface Post {
   id: string
   image_url: string
+  media_type: 'image' | 'video'
   caption: string
   hashtags: string[]
   scheduled_for: string
@@ -200,11 +201,10 @@ export default function PostsTimeline({ initialPosts }: PostsTimelineProps) {
                               <div className="flex gap-3">
                                 {/* Thumbnail */}
                                 <div className="w-16 h-16 bg-gray-100 rounded overflow-hidden flex-shrink-0 relative">
-                                  <Image
-                                    src={post.image_url}
+                                  <MediaPreview
+                                    mediaUrl={post.image_url}
+                                    mediaType={post.media_type || 'image'}
                                     alt="Post preview"
-                                    fill
-                                    className="object-cover"
                                   />
                                 </div>
 
