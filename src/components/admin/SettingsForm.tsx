@@ -3,6 +3,15 @@
 import { useState } from 'react'
 import { Company } from '@/lib/supabase/types'
 import { TEMPLATE_CONFIGS } from '@/lib/templates/types'
+import SettingsSection from './SettingsSection'
+import {
+  Building2,
+  Phone,
+  Palette,
+  Share2,
+  Calendar,
+  Sparkles
+} from 'lucide-react'
 
 interface SettingsFormProps {
   company: Company
@@ -84,11 +93,13 @@ export default function SettingsForm({ company }: SettingsFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-6">
       {/* Business Info */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
-        <h2 className="font-semibold text-gray-900 mb-6">Business Information</h2>
-
+      <SettingsSection
+        title="Business Information"
+        icon={<Building2 className="w-5 h-5" />}
+        defaultOpen={false}
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -159,12 +170,14 @@ export default function SettingsForm({ company }: SettingsFormProps) {
             />
           </div>
         </div>
-      </div>
+      </SettingsSection>
 
       {/* Contact Info */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
-        <h2 className="font-semibold text-gray-900 mb-6">Contact Information</h2>
-
+      <SettingsSection
+        title="Contact Information"
+        icon={<Phone className="w-5 h-5" />}
+        defaultOpen={false}
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -234,12 +247,14 @@ export default function SettingsForm({ company }: SettingsFormProps) {
             />
           </div>
         </div>
-      </div>
+      </SettingsSection>
 
       {/* Social Links */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
-        <h2 className="font-semibold text-gray-900 mb-6">Social & Reviews</h2>
-
+      <SettingsSection
+        title="Social Links"
+        icon={<Share2 className="w-5 h-5" />}
+        defaultOpen={false}
+      >
         <div className="grid grid-cols-1 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -283,12 +298,14 @@ export default function SettingsForm({ company }: SettingsFormProps) {
             />
           </div>
         </div>
-      </div>
+      </SettingsSection>
 
       {/* Posting Settings */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
-        <h2 className="font-semibold text-gray-900 mb-6">Posting Settings</h2>
-
+      <SettingsSection
+        title="Posting Settings"
+        icon={<Calendar className="w-5 h-5" />}
+        defaultOpen={true}
+      >
         <div className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -364,12 +381,14 @@ export default function SettingsForm({ company }: SettingsFormProps) {
             </div>
           )}
         </div>
-      </div>
+      </SettingsSection>
 
       {/* AI Caption Settings */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
-        <h2 className="font-semibold text-gray-900 mb-6">AI Caption Settings</h2>
-
+      <SettingsSection
+        title="AI Caption Settings"
+        icon={<Sparkles className="w-5 h-5" />}
+        defaultOpen={false}
+      >
         <div className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -481,12 +500,14 @@ export default function SettingsForm({ company }: SettingsFormProps) {
             </p>
           </div>
         </div>
-      </div>
+      </SettingsSection>
 
-      {/* Branding */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
-        <h2 className="font-semibold text-gray-900 mb-6">Branding</h2>
-
+      {/* Website & Branding */}
+      <SettingsSection
+        title="Website & Branding"
+        icon={<Palette className="w-5 h-5" />}
+        defaultOpen={true}
+      >
         <div className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -552,7 +573,7 @@ export default function SettingsForm({ company }: SettingsFormProps) {
             </div>
           </div>
         </div>
-      </div>
+      </SettingsSection>
 
       {/* Submit */}
       <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-4">
