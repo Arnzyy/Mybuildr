@@ -40,7 +40,7 @@ export default function AdminSidebar({ company }: AdminSidebarProps) {
     },
     {
       href: '/admin/photos',
-      label: 'My Photos',
+      label: 'Media',
       icon: Camera,
       requiredFeature: 'upload_projects',
     },

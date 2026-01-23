@@ -45,7 +45,7 @@ export default async function PhotosPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-            My Photos
+            Media Library
           </h1>
           <p className="text-gray-600 mt-1">
             Upload and manage photos for your website & social media

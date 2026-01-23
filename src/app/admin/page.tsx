@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getCompanyForUser, getCompanyProjects, getCompanyMedia } from '@/lib/supabase/queries'
 import { redirect } from 'next/navigation'
 import { hasFeature } from '@/lib/features'
@@ -38,7 +39,9 @@ export default async function AdminDashboard() {
     .order('scheduled_for', { ascending: true })
     .limit(1)
 
-  const { data: socialTokens } = await supabase
+  // Use admin client to query social tokens
+  const adminClient = createAdminClient()
+  const { data: socialTokens } = await adminClient
     .from('social_tokens')
     .select('*')
     .eq('company_id', company.id)
