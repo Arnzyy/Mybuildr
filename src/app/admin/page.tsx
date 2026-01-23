@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { getCompanyForUser, getCompanyProjects } from '@/lib/supabase/queries'
+import { getCompanyForUser, getCompanyProjects, getCompanyMedia } from '@/lib/supabase/queries'
 import { redirect } from 'next/navigation'
 import { hasFeature } from '@/lib/features'
 import Link from 'next/link'
@@ -10,6 +10,8 @@ import {
   FolderOpen,
   CheckCircle2
 } from 'lucide-react'
+import HealthCheckBanner from '@/components/admin/HealthCheckBanner'
+import { format } from 'date-fns'
 
 export default async function AdminDashboard() {
   const supabase = await createClient()
@@ -24,6 +26,63 @@ export default async function AdminDashboard() {
   const totalPhotos = projects.reduce((sum, p) => sum + (p.images?.length || 0), 0)
   const hasSocialConnected = hasFeature(company.tier, 'social_connections') && company.posting_enabled
 
+  // Get data for health check
+  const media = await getCompanyMedia(company.id)
+  const availableMedia = media.filter(m => m.is_available)
+
+  const { data: scheduledPosts } = await supabase
+    .from('scheduled_posts')
+    .select('*')
+    .eq('company_id', company.id)
+    .eq('status', 'pending')
+    .order('scheduled_for', { ascending: true })
+    .limit(1)
+
+  const { data: socialTokens } = await supabase
+    .from('social_tokens')
+    .select('*')
+    .eq('company_id', company.id)
+    .eq('is_connected', true)
+
+  const connectedSocialsCount = socialTokens?.length || 0
+  const nextPost = scheduledPosts?.[0]
+
+  // Calculate health status
+  let healthStatus: {
+    status: 'good' | 'warning' | 'critical'
+    icon: string
+    title: string
+    message: string
+    action?: { label: string; href: string }
+  }
+
+  if (connectedSocialsCount === 0 && hasFeature(company.tier, 'social_connections')) {
+    healthStatus = {
+      status: 'critical',
+      icon: '🔴',
+      title: 'Connect your socials',
+      message: 'Connect Instagram or Facebook to start auto-posting',
+      action: { label: 'Connect Now', href: '/admin/social' }
+    }
+  } else if (availableMedia.length < 3) {
+    healthStatus = {
+      status: 'warning',
+      icon: '⚠️',
+      title: 'Running low on photos',
+      message: `Only ${availableMedia.length} photo${availableMedia.length === 1 ? '' : 's'} left. Upload more to keep posting.`,
+      action: { label: 'Upload Photos', href: '/admin/photos' }
+    }
+  } else {
+    healthStatus = {
+      status: 'good',
+      icon: '✅',
+      title: 'All good!',
+      message: nextPost
+        ? `${availableMedia.length} photos queued. Next post: ${format(new Date(nextPost.scheduled_for), 'EEE d MMM, h:mmaaa').toLowerCase()}`
+        : `${availableMedia.length} photos ready to post.`
+    }
+  }
+
   return (
     <div className="max-w-2xl mx-auto">
       {/* Welcome */}
@@ -33,6 +92,15 @@ export default async function AdminDashboard() {
         </h1>
         <p className="text-gray-500 mt-1">Upload photos, we do the rest</p>
       </div>
+
+      {/* Health Check Banner */}
+      <HealthCheckBanner
+        status={healthStatus.status}
+        icon={healthStatus.icon}
+        title={healthStatus.title}
+        message={healthStatus.message}
+        action={healthStatus.action}
+      />
 
       {/* BIG UPLOAD BUTTON */}
       <Link

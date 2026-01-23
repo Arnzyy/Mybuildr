@@ -31,7 +31,7 @@ export default function HealthCheckBanner({
   }
 
   return (
-    <div className={`rounded-xl border p-4 md:p-6 ${colors[status]}`}>
+    <div className={`rounded-xl border p-4 md:p-6 mb-6 ${colors[status]}`}>
       <div className="flex items-start gap-3 md:gap-4">
         <span className="text-2xl md:text-3xl flex-shrink-0">{icon}</span>
         <div className="flex-1 min-w-0">
