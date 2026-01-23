@@ -39,6 +39,7 @@ export default function SettingsForm({ company }: SettingsFormProps) {
     template: company.template,
     primary_color: company.primary_color,
     secondary_color: company.secondary_color,
+    posting_enabled: company.posting_enabled ?? true,
     posts_per_week: company.posts_per_week || 5,
     // AI Caption Settings
     caption_guidelines: company.caption_guidelines || '',
@@ -307,6 +308,37 @@ export default function SettingsForm({ company }: SettingsFormProps) {
         defaultOpen={true}
       >
         <div className="space-y-6">
+          {/* Pause/Resume Posting Toggle */}
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
+            <div>
+              <p className="font-medium text-gray-900">
+                {formData.posting_enabled ? 'Auto-Posting Active' : 'Auto-Posting Paused'}
+              </p>
+              <p className="text-sm text-gray-500">
+                {formData.posting_enabled
+                  ? 'Your photos are being posted automatically'
+                  : 'Posting is paused - no new posts will be created'
+                }
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setFormData(prev => ({ ...prev, posting_enabled: !prev.posting_enabled }))
+                setSaved(false)
+              }}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                formData.posting_enabled ? 'bg-green-500' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  formData.posting_enabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Posts per week

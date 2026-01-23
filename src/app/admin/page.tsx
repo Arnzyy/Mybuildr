@@ -56,7 +56,16 @@ export default async function AdminDashboard() {
     action?: { label: string; href: string }
   }
 
-  if (connectedSocialsCount === 0 && hasFeature(company.tier, 'social_connections')) {
+  // Check if posting is paused
+  if (!company.posting_enabled) {
+    healthStatus = {
+      status: 'warning',
+      icon: '⏸️',
+      title: 'Posting paused',
+      message: 'Auto-posting is currently paused. Enable it in Settings to resume.',
+      action: { label: 'Go to Settings', href: '/admin/settings' }
+    }
+  } else if (connectedSocialsCount === 0 && hasFeature(company.tier, 'social_connections')) {
     healthStatus = {
       status: 'critical',
       icon: '🔴',

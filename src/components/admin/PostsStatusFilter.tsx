@@ -1,22 +1,24 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 
 export default function PostsStatusFilter() {
   const router = useRouter()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
   const status = searchParams.get('status') || 'all'
-  const view = searchParams.get('view') || 'list'
 
   const handleStatusChange = (newStatus: string) => {
-    const params = new URLSearchParams()
-    if (newStatus !== 'all') {
+    const params = new URLSearchParams(searchParams.toString())
+
+    if (newStatus === 'all') {
+      params.delete('status')
+    } else {
       params.set('status', newStatus)
     }
-    if (view !== 'list') {
-      params.set('view', view)
-    }
-    router.push(`/admin/posts${params.toString() ? '?' + params.toString() : ''}`)
+
+    const queryString = params.toString()
+    router.push(queryString ? `${pathname}?${queryString}` : pathname)
   }
 
   const tabs = [
@@ -30,6 +32,7 @@ export default function PostsStatusFilter() {
       {tabs.map((tab) => (
         <button
           key={tab.value}
+          type="button"
           onClick={() => handleStatusChange(tab.value)}
           className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 -mb-px ${
             status === tab.value
