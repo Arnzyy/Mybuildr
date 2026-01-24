@@ -19,6 +19,7 @@ export default function PostsStatusFilter() {
 
     const queryString = params.toString()
     router.push(queryString ? `${pathname}?${queryString}` : pathname)
+    router.refresh()
   }
 
   const tabs = [

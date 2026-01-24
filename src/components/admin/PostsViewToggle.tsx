@@ -20,6 +20,7 @@ export default function PostsViewToggle() {
 
     const queryString = params.toString()
     router.push(queryString ? `${pathname}?${queryString}` : pathname)
+    router.refresh()
   }
 
   return (
