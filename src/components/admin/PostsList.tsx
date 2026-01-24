@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import { Calendar, Check, X, AlertCircle, Edit2, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
 import MediaPreview from './MediaPreview'
@@ -23,6 +24,7 @@ interface PostsListProps {
 }
 
 export default function PostsList({ initialPosts }: PostsListProps) {
+  const router = useRouter()
   const [posts, setPosts] = useState(initialPosts)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editCaption, setEditCaption] = useState('')
@@ -99,16 +101,15 @@ export default function PostsList({ initialPosts }: PostsListProps) {
       })
 
       if (res.ok) {
-        // Update local state
-        const newPosts = [...posts]
-        newPosts[index] = { ...post1, scheduled_for: post2.scheduled_for }
-        newPosts[newIndex] = { ...post2, scheduled_for: post1.scheduled_for }
-        // Re-sort by scheduled_for
-        newPosts.sort((a, b) => new Date(a.scheduled_for).getTime() - new Date(b.scheduled_for).getTime())
-        setPosts(newPosts)
+        // Refresh the page to show updated order
+        router.refresh()
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to reorder posts')
       }
-    } catch {
-      alert('Failed to reorder posts')
+    } catch (error) {
+      console.error('Reorder error:', error)
+      alert('Failed to reorder posts. Please try again.')
     }
   }
 
