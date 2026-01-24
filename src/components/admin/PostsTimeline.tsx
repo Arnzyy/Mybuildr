@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, isSameDay } from 'date-fns'
 import { Calendar, Check, X, AlertCircle, Edit2, Trash2 } from 'lucide-react'
 import MediaPreview from './MediaPreview'
@@ -24,6 +24,7 @@ interface PostsTimelineProps {
 }
 
 export default function PostsTimeline({ initialPosts }: PostsTimelineProps) {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const statusFilter = searchParams.get('status') || 'pending'
 
@@ -40,7 +41,7 @@ export default function PostsTimeline({ initialPosts }: PostsTimelineProps) {
   }, [initialPosts, statusFilter])
 
   const handleCancel = async (id: string) => {
-    if (!confirm('Cancel this scheduled post?')) return
+    if (!confirm('Delete this scheduled post?')) return
 
     try {
       const res = await fetch(`/api/admin/posts/${id}`, {
@@ -48,12 +49,12 @@ export default function PostsTimeline({ initialPosts }: PostsTimelineProps) {
       })
 
       if (res.ok) {
-        setPosts(posts.map(p =>
-          p.id === id ? { ...p, status: 'skipped' } : p
-        ))
+        router.refresh()
+      } else {
+        alert('Failed to delete post')
       }
     } catch {
-      alert('Failed to cancel post')
+      alert('Failed to delete post')
     }
   }
 
@@ -77,12 +78,10 @@ export default function PostsTimeline({ initialPosts }: PostsTimelineProps) {
       })
 
       if (res.ok) {
-        setPosts(posts.map(p =>
-          p.id === editingId
-            ? { ...p, caption: editCaption, hashtags: editHashtags.split(',').map(h => h.trim()) }
-            : p
-        ))
         setEditingId(null)
+        router.refresh()
+      } else {
+        alert('Failed to save changes')
       }
     } catch {
       alert('Failed to save changes')
