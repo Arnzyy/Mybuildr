@@ -63,11 +63,6 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
   const postedCount = posts?.filter(p => p.status === 'posted').length || 0
   const failedCount = posts?.filter(p => p.status === 'failed').length || 0
 
-  // Filter posts based on status
-  const filteredPosts = statusFilter === 'all'
-    ? posts
-    : posts?.filter(p => p.status === statusFilter)
-
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -166,20 +161,12 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
       {posts && posts.length > 0 && <PostsViewToggle />}
 
       {/* Posts list or timeline */}
-      {filteredPosts && filteredPosts.length > 0 ? (
+      {posts && posts.length > 0 ? (
         view === 'timeline' ? (
-          <PostsTimeline initialPosts={filteredPosts} />
+          <PostsTimeline initialPosts={posts} />
         ) : (
-          <PostsList initialPosts={filteredPosts} />
+          <PostsList initialPosts={posts} />
         )
-      ) : posts && posts.length > 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-          <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">No {statusFilter} posts</h2>
-          <p className="text-gray-600">
-            Try selecting a different filter or add more content.
-          </p>
-        </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
           <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />

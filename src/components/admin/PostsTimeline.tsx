@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, isSameDay } from 'date-fns'
 import { Calendar, Check, X, AlertCircle, Edit2, Trash2 } from 'lucide-react'
 import MediaPreview from './MediaPreview'
@@ -23,10 +24,20 @@ interface PostsTimelineProps {
 }
 
 export default function PostsTimeline({ initialPosts }: PostsTimelineProps) {
-  const [posts, setPosts] = useState(initialPosts)
+  const searchParams = useSearchParams()
+  const statusFilter = searchParams.get('status') || 'pending'
+
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editCaption, setEditCaption] = useState('')
   const [editHashtags, setEditHashtags] = useState('')
+
+  // Filter posts on client side
+  const posts = useMemo(() => {
+    if (statusFilter === 'all') {
+      return initialPosts
+    }
+    return initialPosts.filter(p => p.status === statusFilter)
+  }, [initialPosts, statusFilter])
 
   const handleCancel = async (id: string) => {
     if (!confirm('Cancel this scheduled post?')) return

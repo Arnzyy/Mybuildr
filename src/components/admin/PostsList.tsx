@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useMemo } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
 import { Calendar, Check, X, AlertCircle, Edit2, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
 import MediaPreview from './MediaPreview'
@@ -25,10 +25,20 @@ interface PostsListProps {
 
 export default function PostsList({ initialPosts }: PostsListProps) {
   const router = useRouter()
-  const [posts, setPosts] = useState(initialPosts)
+  const searchParams = useSearchParams()
+  const statusFilter = searchParams.get('status') || 'pending'
+
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editCaption, setEditCaption] = useState('')
   const [editHashtags, setEditHashtags] = useState('')
+
+  // Filter posts on client side
+  const posts = useMemo(() => {
+    if (statusFilter === 'all') {
+      return initialPosts
+    }
+    return initialPosts.filter(p => p.status === statusFilter)
+  }, [initialPosts, statusFilter])
 
   const handleCancel = async (id: string) => {
     if (!confirm('Delete this scheduled post?')) return
