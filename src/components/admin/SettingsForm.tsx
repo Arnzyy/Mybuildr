@@ -541,24 +541,6 @@ export default function SettingsForm({ company }: SettingsFormProps) {
         defaultOpen={true}
       >
         <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Template
-            </label>
-            <select
-              name="template"
-              value={formData.template}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
-            >
-              {Object.values(TEMPLATE_CONFIGS).map((template) => (
-                <option key={template.name} value={template.name}>
-                  {template.displayName} - {template.description}
-                </option>
-              ))}
-            </select>
-          </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
