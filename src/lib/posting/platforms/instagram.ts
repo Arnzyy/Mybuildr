@@ -6,6 +6,130 @@ interface PostResult {
   error?: string
 }
 
+export async function postCarouselToInstagram(
+  companyId: string,
+  imageUrls: string[],
+  caption: string
+): Promise<PostResult> {
+  const supabase = createAdminClient()
+
+  // Get Instagram token
+  const { data: token } = await supabase
+    .from('social_tokens')
+    .select('*')
+    .eq('company_id', companyId)
+    .eq('platform', 'instagram')
+    .eq('is_connected', true)
+    .single()
+
+  if (!token) {
+    return { success: false, error: 'Instagram not connected' }
+  }
+
+  try {
+    // Step 1: Create media containers for each image
+    const mediaContainerIds: string[] = []
+
+    for (const imageUrl of imageUrls) {
+      const containerResponse = await fetch(
+        `https://graph.facebook.com/v18.0/${token.account_id}/media`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            image_url: imageUrl,
+            is_carousel_item: true,
+            access_token: token.access_token,
+          }),
+        }
+      )
+
+      const containerData = await containerResponse.json()
+
+      if (containerData.error) {
+        console.error('Instagram container error:', containerData.error)
+        return { success: false, error: containerData.error.message }
+      }
+
+      mediaContainerIds.push(containerData.id)
+    }
+
+    // Step 2: Create carousel container
+    const carouselResponse = await fetch(
+      `https://graph.facebook.com/v18.0/${token.account_id}/media`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          media_type: 'CAROUSEL',
+          children: mediaContainerIds,
+          caption,
+          access_token: token.access_token,
+        }),
+      }
+    )
+
+    const carouselData = await carouselResponse.json()
+
+    if (carouselData.error) {
+      console.error('Instagram carousel error:', carouselData.error)
+      return { success: false, error: carouselData.error.message }
+    }
+
+    const carouselId = carouselData.id
+
+    // Step 3: Wait for carousel to be ready
+    let ready = false
+    let attempts = 0
+    const maxAttempts = 10
+
+    while (!ready && attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 2000))
+
+      const statusResponse = await fetch(
+        `https://graph.facebook.com/v18.0/${carouselId}?fields=status_code&access_token=${token.access_token}`
+      )
+      const statusData = await statusResponse.json()
+
+      if (statusData.status_code === 'FINISHED') {
+        ready = true
+      } else if (statusData.status_code === 'ERROR') {
+        return { success: false, error: 'Carousel processing failed' }
+      }
+
+      attempts++
+    }
+
+    if (!ready) {
+      return { success: false, error: 'Carousel processing timeout' }
+    }
+
+    // Step 4: Publish the carousel
+    const publishResponse = await fetch(
+      `https://graph.facebook.com/v18.0/${token.account_id}/media_publish`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creation_id: carouselId,
+          access_token: token.access_token,
+        }),
+      }
+    )
+
+    const publishData = await publishResponse.json()
+
+    if (publishData.error) {
+      return { success: false, error: publishData.error.message }
+    }
+
+    return { success: true, postId: publishData.id }
+  } catch (error) {
+    console.error('Instagram carousel post error:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+  }
+}
+
 export async function postToInstagram(
   companyId: string,
   imageUrl: string,

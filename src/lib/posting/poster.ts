@@ -1,6 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import { postToInstagram } from './platforms/instagram'
-import { postToFacebook } from './platforms/facebook'
+import { postToInstagram, postCarouselToInstagram } from './platforms/instagram'
+import { postToFacebook, postCarouselToFacebook } from './platforms/facebook'
 import { postToGoogleBusiness } from './platforms/google'
 
 interface PostResult {
@@ -56,16 +56,31 @@ export async function processScheduledPost(postId: string): Promise<boolean> {
     ? `${post.caption}\n\n${post.hashtags.map((h: string) => `#${h}`).join(' ')}`
     : post.caption
 
+  // Check if this is a carousel post (has project_id with multiple images)
+  let isCarousel = false
+  let imageUrls: string[] = [post.image_url]
+
+  if (post.project_id) {
+    const { data: project } = await supabase
+      .from('projects')
+      .select('images')
+      .eq('id', post.project_id)
+      .single()
+
+    if (project && project.images && project.images.length > 1) {
+      isCarousel = true
+      imageUrls = project.images
+    }
+  }
+
   const results: PostResult[] = []
 
   // Post to each connected platform
   if (connectedPlatforms.includes('instagram')) {
-    const result = await postToInstagram(
-      post.company_id,
-      post.image_url,
-      fullCaption,
-      post.media_type || 'image'
-    )
+    const result = isCarousel
+      ? await postCarouselToInstagram(post.company_id, imageUrls, fullCaption)
+      : await postToInstagram(post.company_id, post.image_url, fullCaption, post.media_type || 'image')
+
     results.push({ platform: 'instagram', ...result })
 
     if (result.success && result.postId) {
@@ -77,7 +92,10 @@ export async function processScheduledPost(postId: string): Promise<boolean> {
   }
 
   if (connectedPlatforms.includes('facebook')) {
-    const result = await postToFacebook(post.company_id, post.image_url, fullCaption)
+    const result = isCarousel
+      ? await postCarouselToFacebook(post.company_id, imageUrls, fullCaption)
+      : await postToFacebook(post.company_id, post.image_url, fullCaption)
+
     results.push({ platform: 'facebook', ...result })
 
     if (result.success && result.postId) {
