@@ -37,6 +37,7 @@ const PREVIEW_COMPANY: Company = {
   tier_updated_at: null,
   posting_enabled: true,
   posts_per_week: 5,
+  posting_times: [8, 12, 18],
   custom_domain: null,
   is_active: true,
   is_published: true,
