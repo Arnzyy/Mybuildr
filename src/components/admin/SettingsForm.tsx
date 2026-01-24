@@ -41,6 +41,7 @@ export default function SettingsForm({ company }: SettingsFormProps) {
     secondary_color: company.secondary_color,
     posting_enabled: company.posting_enabled ?? true,
     posts_per_week: company.posts_per_week || 5,
+    posting_times: company.posting_times || [8, 12, 18],
     // AI Caption Settings
     caption_guidelines: company.caption_guidelines || '',
     caption_signoff_enabled: company.caption_signoff_enabled ?? true,
@@ -363,7 +364,63 @@ export default function SettingsForm({ company }: SettingsFormProps) {
               </optgroup>
             </select>
             <p className="text-xs text-gray-500 mt-2">
-              How often we auto-post to social media. We use 3 daily time slots (8am, 12pm, 6pm UK time) and rotate through your media library.
+              How often we auto-post to social media. Posts are distributed across your selected time slots.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Posting Times (UK time)
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              {[
+                { hour: 6, label: '6am' },
+                { hour: 7, label: '7am' },
+                { hour: 8, label: '8am' },
+                { hour: 9, label: '9am' },
+                { hour: 10, label: '10am' },
+                { hour: 11, label: '11am' },
+                { hour: 12, label: '12pm' },
+                { hour: 13, label: '1pm' },
+                { hour: 14, label: '2pm' },
+                { hour: 15, label: '3pm' },
+                { hour: 16, label: '4pm' },
+                { hour: 17, label: '5pm' },
+                { hour: 18, label: '6pm' },
+                { hour: 19, label: '7pm' },
+                { hour: 20, label: '8pm' },
+                { hour: 21, label: '9pm' },
+              ].map(({ hour, label }) => (
+                <button
+                  key={hour}
+                  type="button"
+                  onClick={() => {
+                    const currentTimes = formData.posting_times
+                    const newTimes = currentTimes.includes(hour)
+                      ? currentTimes.filter(h => h !== hour)
+                      : [...currentTimes, hour].sort((a, b) => a - b)
+
+                    // Ensure at least one time slot
+                    if (newTimes.length === 0) {
+                      alert('You must select at least one posting time')
+                      return
+                    }
+
+                    setFormData(prev => ({ ...prev, posting_times: newTimes }))
+                    setSaved(false)
+                  }}
+                  className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors ${
+                    formData.posting_times.includes(hour)
+                      ? 'bg-orange-500 border-orange-500 text-white'
+                      : 'bg-white border-gray-300 text-gray-700 hover:border-orange-300'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Select the times you want posts to go live. Posts will be distributed across these time slots based on your posting frequency.
             </p>
           </div>
 

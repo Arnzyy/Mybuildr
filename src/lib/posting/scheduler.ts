@@ -6,13 +6,14 @@ import { Company, MediaItem, Review } from '@/lib/supabase/types'
 // UK timezone
 const UK_TIMEZONE = 'Europe/London'
 
-// Optimal posting times (hour in 24h format)
-const POSTING_TIMES = [8, 12, 18] // 8am, 12pm, 6pm
+// Default posting times (hour in 24h format) - fallback if company hasn't set custom times
+const DEFAULT_POSTING_TIMES = [8, 12, 18] // 8am, 12pm, 6pm
 
 // Get next available posting slot
 function getNextPostingSlot(
   existingSlots: Date[],
-  postsPerWeek: number = 5
+  postsPerWeek: number = 5,
+  postingTimes: number[] = DEFAULT_POSTING_TIMES
 ): Date {
   const now = new Date()
   const ukNow = new Date(now.toLocaleString('en-US', { timeZone: UK_TIMEZONE }))
@@ -28,7 +29,7 @@ function getNextPostingSlot(
     date.setDate(date.getDate() + day)
 
     // Check each posting time
-    for (const hour of POSTING_TIMES) {
+    for (const hour of postingTimes) {
       const slot = new Date(date)
       slot.setHours(hour, 0, 0, 0)
 
@@ -196,7 +197,11 @@ export async function schedulePost(company: Company): Promise<{
       .gte('scheduled_for', new Date().toISOString())
 
     const existingSlots = (existingPosts || []).map(p => new Date(p.scheduled_for))
-    const scheduledFor = getNextPostingSlot(existingSlots, company.posts_per_week || 5)
+    const scheduledFor = getNextPostingSlot(
+      existingSlots,
+      company.posts_per_week || 5,
+      company.posting_times || DEFAULT_POSTING_TIMES
+    )
 
     // Decide whether to post a review or image
     const postReview = company.review_posting_enabled && await shouldPostReview(company.id)

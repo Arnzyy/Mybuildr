@@ -43,6 +43,7 @@ export interface Company {
   tier_updated_at: string | null
   posting_enabled: boolean
   posts_per_week: number
+  posting_times: number[] | null
   custom_domain: string | null
   is_active: boolean
   is_published: boolean
