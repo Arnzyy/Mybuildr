@@ -226,6 +226,17 @@ export default function PostsList({ initialPosts }: PostsListProps) {
                     </button>
                   </div>
                 )}
+
+                {post.status === 'failed' && (
+                  <button
+                    type="button"
+                    onClick={() => handleCancel(post.id)}
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
 
               {/* Caption */}

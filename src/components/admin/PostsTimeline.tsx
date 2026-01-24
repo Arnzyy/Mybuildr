@@ -239,6 +239,15 @@ export default function PostsTimeline({ initialPosts }: PostsTimelineProps) {
                                         </button>
                                       </div>
                                     )}
+
+                                    {post.status === 'failed' && (
+                                      <button
+                                        onClick={() => handleCancel(post.id)}
+                                        className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-100 rounded"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    )}
                                   </div>
 
                                   {editingId === post.id ? (
