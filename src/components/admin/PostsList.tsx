@@ -31,7 +31,7 @@ export default function PostsList({ initialPosts }: PostsListProps) {
   const [editHashtags, setEditHashtags] = useState('')
 
   const handleCancel = async (id: string) => {
-    if (!confirm('Cancel this scheduled post?')) return
+    if (!confirm('Delete this scheduled post?')) return
 
     try {
       const res = await fetch(`/api/admin/posts/${id}`, {
@@ -39,12 +39,12 @@ export default function PostsList({ initialPosts }: PostsListProps) {
       })
 
       if (res.ok) {
-        setPosts(posts.map(p =>
-          p.id === id ? { ...p, status: 'skipped' } : p
-        ))
+        router.refresh()
+      } else {
+        alert('Failed to delete post')
       }
     } catch {
-      alert('Failed to cancel post')
+      alert('Failed to delete post')
     }
   }
 
@@ -68,12 +68,10 @@ export default function PostsList({ initialPosts }: PostsListProps) {
       })
 
       if (res.ok) {
-        setPosts(posts.map(p =>
-          p.id === editingId
-            ? { ...p, caption: editCaption, hashtags: editHashtags.split(',').map(h => h.trim()) }
-            : p
-        ))
         setEditingId(null)
+        router.refresh()
+      } else {
+        alert('Failed to save changes')
       }
     } catch {
       alert('Failed to save changes')

@@ -10,6 +10,7 @@ import {
   Camera,
   Calendar,
   Share2,
+  Star,
   ExternalLink,
   Lock,
   LogOut
@@ -55,6 +56,12 @@ export default function AdminSidebar({ company }: AdminSidebarProps) {
       label: 'Socials',
       icon: Share2,
       requiredFeature: 'social_connections',
+    },
+    {
+      href: '/admin/reviews',
+      label: 'Reviews',
+      icon: Star,
+      requiredFeature: null,
     },
     {
       href: '/admin/settings',

@@ -15,6 +15,7 @@ import {
   Camera,
   Calendar,
   Share2,
+  Star,
   ExternalLink,
   Lock
 } from 'lucide-react'
@@ -41,6 +42,7 @@ export default function AdminHeader({ company }: AdminHeaderProps) {
     { href: '/admin/photos', label: 'Media', icon: Camera, requiredFeature: 'upload_projects' },
     { href: '/admin/posts', label: 'Posts', icon: Calendar, requiredFeature: 'view_scheduled_posts' },
     { href: '/admin/social', label: 'Socials', icon: Share2, requiredFeature: 'social_connections' },
+    { href: '/admin/reviews', label: 'Reviews', icon: Star, requiredFeature: null },
     { href: '/admin/settings', label: 'Settings', icon: Settings, requiredFeature: null },
   ]
 
