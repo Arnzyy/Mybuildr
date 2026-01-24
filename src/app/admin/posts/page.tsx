@@ -11,7 +11,7 @@ import PostsStatusFilter from '@/components/admin/PostsStatusFilter'
 import GeneratePostsButton from '@/components/admin/GeneratePostsButton'
 import { Lock, Calendar, Zap } from 'lucide-react'
 
-export default async function PostsPage({ searchParams }: { searchParams: { view?: string; status?: string } }) {
+export default async function PostsPage({ searchParams }: { searchParams: Promise<{ view?: string; status?: string }> }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -21,8 +21,9 @@ export default async function PostsPage({ searchParams }: { searchParams: { view
   if (!company) redirect('/login')
 
   const canViewPosts = hasFeature(company.tier, 'view_scheduled_posts')
-  const view = searchParams.view || 'list'
-  const statusFilter = searchParams.status || 'pending'
+  const params = await searchParams
+  const view = params.view || 'list'
+  const statusFilter = params.status || 'pending'
 
   if (!canViewPosts) {
     return (
