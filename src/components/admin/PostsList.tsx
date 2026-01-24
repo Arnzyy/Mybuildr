@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { format } from 'date-fns'
-import { Calendar, Check, X, AlertCircle, Edit2, Trash2 } from 'lucide-react'
+import { Calendar, Check, X, AlertCircle, Edit2, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
 import MediaPreview from './MediaPreview'
 
 interface Post {
@@ -78,6 +78,40 @@ export default function PostsList({ initialPosts }: PostsListProps) {
     }
   }
 
+  const handleReorder = async (index: number, direction: 'up' | 'down') => {
+    const newIndex = direction === 'up' ? index - 1 : index + 1
+    if (newIndex < 0 || newIndex >= posts.length) return
+
+    const post1 = posts[index]
+    const post2 = posts[newIndex]
+
+    // Swap scheduled times
+    try {
+      const res = await fetch('/api/admin/posts/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          post1_id: post1.id,
+          post1_time: post2.scheduled_for,
+          post2_id: post2.id,
+          post2_time: post1.scheduled_for,
+        }),
+      })
+
+      if (res.ok) {
+        // Update local state
+        const newPosts = [...posts]
+        newPosts[index] = { ...post1, scheduled_for: post2.scheduled_for }
+        newPosts[newIndex] = { ...post2, scheduled_for: post1.scheduled_for }
+        // Re-sort by scheduled_for
+        newPosts.sort((a, b) => new Date(a.scheduled_for).getTime() - new Date(b.scheduled_for).getTime())
+        setPosts(newPosts)
+      }
+    } catch {
+      alert('Failed to reorder posts')
+    }
+  }
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -115,7 +149,7 @@ export default function PostsList({ initialPosts }: PostsListProps) {
 
   return (
     <div className="space-y-4">
-      {posts.map((post) => (
+      {posts.map((post, index) => (
         <div
           key={post.id}
           className="bg-white rounded-xl border border-gray-200 p-4"
@@ -145,15 +179,39 @@ export default function PostsList({ initialPosts }: PostsListProps) {
 
                 {post.status === 'pending' && (
                   <div className="flex gap-2">
+                    <div className="flex flex-col gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleReorder(index, 'up')}
+                        disabled={index === 0}
+                        className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Move earlier"
+                      >
+                        <ChevronUp className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleReorder(index, 'down')}
+                        disabled={index === posts.length - 1}
+                        className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Move later"
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </button>
+                    </div>
                     <button
+                      type="button"
                       onClick={() => startEdit(post)}
                       className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
+                      title="Edit"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleCancel(post.id)}
                       className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                      title="Delete"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

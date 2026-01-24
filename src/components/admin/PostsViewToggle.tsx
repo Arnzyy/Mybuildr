@@ -1,17 +1,32 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { List, Calendar } from 'lucide-react'
 
 export default function PostsViewToggle() {
   const router = useRouter()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
   const view = searchParams.get('view') || 'list'
+
+  const handleViewChange = (newView: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+
+    if (newView === 'list') {
+      params.delete('view')
+    } else {
+      params.set('view', newView)
+    }
+
+    const queryString = params.toString()
+    router.push(queryString ? `${pathname}?${queryString}` : pathname)
+  }
 
   return (
     <div className="flex gap-2 mb-6">
       <button
-        onClick={() => router.push('/admin/posts?view=list')}
+        type="button"
+        onClick={() => handleViewChange('list')}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
           view === 'list'
             ? 'bg-orange-500 text-white'
@@ -22,7 +37,8 @@ export default function PostsViewToggle() {
         <span className="text-sm font-medium">List View</span>
       </button>
       <button
-        onClick={() => router.push('/admin/posts?view=timeline')}
+        type="button"
+        onClick={() => handleViewChange('timeline')}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
           view === 'timeline'
             ? 'bg-orange-500 text-white'
