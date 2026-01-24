@@ -41,8 +41,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
-    if (post.status !== 'pending') {
-      return NextResponse.json({ error: 'Can only cancel pending posts' }, { status: 400 })
+    if (post.status !== 'pending' && post.status !== 'failed') {
+      return NextResponse.json({ error: 'Can only delete pending or failed posts' }, { status: 400 })
     }
 
     // Update to skipped status
