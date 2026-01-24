@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { MediaItem } from '@/lib/supabase/types'
 import Image from 'next/image'
+import Link from 'next/link'
 import {
   Trash2,
   Upload,
@@ -12,7 +13,8 @@ import {
   Image as ImageIcon,
   MapPin,
   Calendar,
-  BarChart
+  BarChart,
+  FolderOpen
 } from 'lucide-react'
 
 interface MediaLibraryProps {
@@ -140,40 +142,68 @@ export default function MediaLibrary({ initialMedia }: MediaLibraryProps) {
 
   return (
     <div>
-      {/* Upload area */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/heic"
-          multiple
-          onChange={handleFileSelect}
-          className="hidden"
-          id="media-upload"
-        />
-        <label
-          htmlFor="media-upload"
-          className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-            uploading
-              ? 'border-gray-200 bg-gray-50 cursor-not-allowed'
-              : 'border-gray-300 hover:border-orange-500 hover:bg-orange-50'
-          }`}
+      {/* Upload options */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* Upload Project */}
+        <Link
+          href="/admin/projects/new"
+          className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border-2 border-orange-200 p-6 hover:border-orange-400 hover:shadow-md transition-all group"
         >
-          {uploading ? (
-            <>
-              <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-3" />
-              <p className="text-gray-600 font-medium">Uploading...</p>
-            </>
-          ) : (
-            <>
-              <Upload className="w-10 h-10 text-gray-400 mb-3" />
-              <p className="text-gray-600 font-medium">Click to upload images</p>
-              <p className="text-sm text-gray-400 mt-1">
-                JPG, PNG, WebP, or HEIC (max 10MB each)
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+              <FolderOpen className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 mb-1">Upload Project</h3>
+              <p className="text-sm text-gray-600 mb-2">
+                Create a project with multiple images
               </p>
-            </>
-          )}
-        </label>
+              <ul className="text-xs text-gray-500 space-y-1">
+                <li>• Posts as carousel on Instagram/Facebook</li>
+                <li>• Shows as portfolio project on website</li>
+                <li>• Add title, description & location</li>
+              </ul>
+            </div>
+          </div>
+        </Link>
+
+        {/* Upload Images */}
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border-2 border-blue-200 p-6 hover:border-blue-400 hover:shadow-md transition-all">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/heic"
+            multiple
+            onChange={handleFileSelect}
+            className="hidden"
+            id="media-upload"
+          />
+          <label
+            htmlFor="media-upload"
+            className={`flex items-start gap-4 ${uploading ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+          >
+            <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+              {uploading ? (
+                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <ImageIcon className="w-6 h-6 text-white" />
+              )}
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 mb-1">
+                {uploading ? 'Uploading...' : 'Upload Images'}
+              </h3>
+              <p className="text-sm text-gray-600 mb-2">
+                {uploading ? 'Processing your images' : 'Batch upload single images'}
+              </p>
+              <ul className="text-xs text-gray-500 space-y-1">
+                <li>• Posts as individual images to social media</li>
+                <li>• Shows in gallery on website</li>
+                <li>• Quick upload, no project details needed</li>
+              </ul>
+            </div>
+          </label>
+        </div>
       </div>
 
       {/* Media grid */}

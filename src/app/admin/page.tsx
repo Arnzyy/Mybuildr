@@ -116,7 +116,7 @@ export default async function AdminDashboard() {
 
       {/* BIG UPLOAD BUTTON */}
       <Link
-        href="/admin/projects/new"
+        href="/admin/photos"
         className="block bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-8 md:p-12 text-center text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all mb-6"
       >
         <div className="w-20 h-20 md:w-24 md:h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -124,7 +124,7 @@ export default async function AdminDashboard() {
         </div>
         <p className="text-2xl md:text-3xl font-bold mb-2">UPLOAD PHOTOS</p>
         <p className="text-orange-100 text-sm md:text-base">
-          Add project photos to your website & social media
+          Upload projects or images to your website & social media
         </p>
       </Link>
 
