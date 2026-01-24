@@ -6,12 +6,12 @@ export default function PostsStatusFilter() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const status = searchParams.get('status') || 'all'
+  const status = searchParams.get('status') || 'pending'
 
   const handleStatusChange = (newStatus: string) => {
     const params = new URLSearchParams(searchParams.toString())
 
-    if (newStatus === 'all') {
+    if (newStatus === 'pending') {
       params.delete('status')
     } else {
       params.set('status', newStatus)
@@ -22,9 +22,9 @@ export default function PostsStatusFilter() {
   }
 
   const tabs = [
-    { value: 'all', label: 'All Posts' },
     { value: 'pending', label: 'Scheduled' },
     { value: 'posted', label: 'Posted' },
+    { value: 'all', label: 'All Posts' },
   ]
 
   return (

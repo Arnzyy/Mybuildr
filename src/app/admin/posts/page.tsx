@@ -22,7 +22,7 @@ export default async function PostsPage({ searchParams }: { searchParams: { view
 
   const canViewPosts = hasFeature(company.tier, 'view_scheduled_posts')
   const view = searchParams.view || 'list'
-  const statusFilter = searchParams.status || 'all'
+  const statusFilter = searchParams.status || 'pending'
 
   if (!canViewPosts) {
     return (
