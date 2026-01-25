@@ -65,21 +65,21 @@ export async function generateReviewGraphic(
         <div
           style={{
             display: 'flex',
-            gap: '12px',
+            gap: '8px',
             justifyContent: 'center',
             marginTop: '140px',
+            fontSize: '48px',
           }}
         >
           {Array.from({ length: 5 }).map((_, i) => (
             <div
               key={i}
               style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-                background: i < review.rating ? '#fbbf24' : 'rgba(255,255,255,0.2)',
+                color: i < review.rating ? '#fbbf24' : 'rgba(255,255,255,0.3)',
               }}
-            />
+            >
+              ★
+            </div>
           ))}
         </div>
 
