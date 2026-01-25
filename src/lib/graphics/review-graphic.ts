@@ -1,118 +1,218 @@
-import sharp from 'sharp'
+// Review graphic generator with proper font loading using node-canvas
+import { createCanvas, registerFont, loadImage, CanvasRenderingContext2D } from 'canvas'
 import { uploadToR2, createUploadParams } from '@/lib/r2/client'
+import { createAdminClient } from '@/lib/supabase/admin'
 import type { Company, Review } from '@/lib/supabase/types'
+import path from 'path'
+import fs from 'fs'
 
-function escapeXml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;')
+// =============================================================================
+// FONT SETUP - Critical for proper text rendering
+// =============================================================================
+
+const FONTS_DIR = path.join(process.cwd(), 'public', 'fonts')
+
+function registerFonts() {
+  try {
+    const regularFont = path.join(FONTS_DIR, 'Inter-Regular.ttf')
+    const boldFont = path.join(FONTS_DIR, 'Inter-Bold.ttf')
+
+    if (fs.existsSync(regularFont)) {
+      registerFont(regularFont, { family: 'Inter', weight: 'normal' })
+    }
+    if (fs.existsSync(boldFont)) {
+      registerFont(boldFont, { family: 'Inter', weight: 'bold' })
+    }
+
+    return true
+  } catch (error) {
+    console.error('Font registration failed:', error)
+    return false
+  }
 }
+
+// Register fonts on module load
+const fontsRegistered = registerFonts()
+const FONT_FAMILY = fontsRegistered ? 'Inter' : 'Arial, Helvetica, sans-serif'
+
+// =============================================================================
+// DESIGN CONSTANTS
+// =============================================================================
+
+const CANVAS_SIZE = 1080
+const STAR_SIZE = 36
+const STAR_GAP = 12
+
+const COLORS = {
+  text: '#1F2937',
+  textLight: '#6B7280',
+  star: '#FBBF24',
+}
+
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
+
+function drawStar(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  size: number,
+  color: string
+) {
+  const spikes = 5
+  const outerRadius = size / 2
+  const innerRadius = outerRadius * 0.4
+
+  ctx.beginPath()
+  ctx.fillStyle = color
+
+  for (let i = 0; i < spikes * 2; i++) {
+    const radius = i % 2 === 0 ? outerRadius : innerRadius
+    const angle = (Math.PI / 2) * -1 + (i * Math.PI) / spikes
+    const x = cx + Math.cos(angle) * radius
+    const y = cy + Math.sin(angle) * radius
+
+    if (i === 0) {
+      ctx.moveTo(x, y)
+    } else {
+      ctx.lineTo(x, y)
+    }
+  }
+
+  ctx.closePath()
+  ctx.fill()
+}
+
+function wrapText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  fontSize: number
+): string[] {
+  ctx.font = `normal ${fontSize}px ${FONT_FAMILY}`
+
+  const words = text.split(' ')
+  const lines: string[] = []
+  let currentLine = ''
+
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word
+    const metrics = ctx.measureText(testLine)
+
+    if (metrics.width > maxWidth && currentLine) {
+      lines.push(currentLine)
+      currentLine = word
+    } else {
+      currentLine = testLine
+    }
+  }
+
+  if (currentLine) {
+    lines.push(currentLine)
+  }
+
+  return lines
+}
+
+// =============================================================================
+// MAIN GRAPHIC GENERATOR
+// =============================================================================
 
 export async function generateReviewGraphic(
   company: Company,
   review: Review
 ): Promise<string> {
-  try {
-    const width = 1080
-    const height = 1080
-    const backgroundColor = company.primary_color || '#1e3a5f'
-    const accentColor = company.secondary_color || '#f97316'
+  const primaryColor = company.primary_color || '#f97316'
 
-    console.log('[Review Graphic] Starting generation', {
-      reviewId: review.id,
-      companyId: company.id
-    })
+  console.log('[Review Graphic] Starting canvas generation', {
+    reviewId: review.id,
+    companyId: company.id,
+    fontsRegistered
+  })
 
-    // Generate stars using SVG paths (font-independent)
-    const starPath = 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z'
-    const stars = Array.from({ length: 5 }, (_, i) => {
-      const x = 370 + (i * 68)
-      const fillColor = i < review.rating ? '#fbbf24' : 'rgba(255,255,255,0.3)'
-      return `<g transform="translate(${x}, 160)">
-        <path d="${starPath}" fill="${fillColor}" transform="scale(1.8)"/>
-      </g>`
-    }).join('\n      ')
+  const canvas = createCanvas(CANVAS_SIZE, CANVAS_SIZE)
+  const ctx = canvas.getContext('2d')
 
-    // Truncate review text
-    const reviewText = review.review_text || ''
-    const truncated = reviewText.length > 150
-      ? reviewText.substring(0, 150) + '...'
-      : reviewText
+  // Background - white base
+  ctx.fillStyle = '#FFFFFF'
+  ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE)
 
-    // Simple SVG with basic text
-    const svg = `
-      <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-        <!-- Background -->
-        <rect width="100%" height="100%" fill="${backgroundColor}"/>
+  // Main colored card
+  const cardMargin = 40
+  const cardRadius = 30
 
-        <!-- Top accent bar -->
-        <rect width="100%" height="8" fill="${accentColor}"/>
+  ctx.fillStyle = primaryColor
+  ctx.beginPath()
+  ctx.roundRect(cardMargin, cardMargin, CANVAS_SIZE - cardMargin * 2, CANVAS_SIZE - cardMargin * 2, cardRadius)
+  ctx.fill()
 
-        <!-- Subtle pattern -->
-        <pattern id="dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
-          <circle cx="2" cy="2" r="1.5" fill="rgba(255,255,255,0.05)"/>
-        </pattern>
-        <rect width="100%" height="100%" fill="url(#dots)"/>
+  // Stars at top
+  let currentY = 140
+  const totalStarsWidth = (STAR_SIZE * 5) + (STAR_GAP * 4)
+  const starsStartX = (CANVAS_SIZE - totalStarsWidth) / 2
 
-        <!-- Stars -->
-        ${stars}
-
-        <!-- Hashtag -->
-        <text x="540" y="330" font-size="52" font-weight="bold" fill="${accentColor}" text-anchor="middle" font-family="Arial,sans-serif">#YourComments</text>
-
-        <!-- White review box -->
-        <rect x="100" y="380" width="880" height="380" rx="12" fill="rgba(255,255,255,0.95)"/>
-
-        <!-- Review text -->
-        <text x="540" y="480" font-size="24" fill="#1a1a1a" text-anchor="middle" font-family="Arial,sans-serif">
-          <tspan x="540" dy="0">${escapeXml(truncated.substring(0, 40))}</tspan>
-          ${truncated.length > 40 ? `<tspan x="540" dy="35">${escapeXml(truncated.substring(40, 80))}</tspan>` : ''}
-          ${truncated.length > 80 ? `<tspan x="540" dy="35">${escapeXml(truncated.substring(80, 120))}</tspan>` : ''}
-          ${truncated.length > 120 ? `<tspan x="540" dy="35">${escapeXml(truncated.substring(120, 150))}</tspan>` : ''}
-        </text>
-
-        <!-- Reviewer name -->
-        <text x="540" y="700" font-size="20" font-weight="bold" fill="#333" text-anchor="middle" font-family="Arial,sans-serif">- ${escapeXml(review.reviewer_name || 'Happy Customer')}</text>
-
-        <!-- Logo placeholder -->
-        <rect x="450" y="880" width="180" height="60" rx="8" fill="rgba(255,255,255,0.15)"/>
-        <text x="540" y="918" font-size="24" font-weight="bold" fill="white" text-anchor="middle" font-family="Arial,sans-serif">LOGO</text>
-
-        <!-- Company name -->
-        <text x="540" y="1020" font-size="18" fill="rgba(255,255,255,0.6)" text-anchor="middle" font-family="Arial,sans-serif">${escapeXml(company.name)}</text>
-
-        <!-- Bottom accent bar -->
-        <rect y="1072" width="100%" height="8" fill="${accentColor}"/>
-      </svg>
-    `
-
-    console.log('[Review Graphic] SVG created, converting with Sharp')
-
-    const buffer = await sharp(Buffer.from(svg))
-      .png()
-      .toBuffer()
-
-    console.log('[Review Graphic] Buffer created, uploading to R2', {
-      bufferSize: buffer.length
-    })
-
-    const { filename } = createUploadParams(`review-${review.id}.png`, company.slug)
-    const url = await uploadToR2(buffer, `graphics/${filename}`, 'image/png')
-
-    console.log('[Review Graphic] Upload complete', { url })
-
-    return url
-  } catch (error) {
-    console.error('[Review Graphic] Generation failed:', {
-      error,
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      reviewId: review.id,
-      companyId: company.id
-    })
-    throw error
+  for (let i = 0; i < 5; i++) {
+    const starX = starsStartX + (i * (STAR_SIZE + STAR_GAP)) + (STAR_SIZE / 2)
+    const color = i < review.rating ? COLORS.star : 'rgba(255,255,255,0.3)'
+    drawStar(ctx, starX, currentY, STAR_SIZE, color)
   }
+
+  currentY += 80
+
+  // White quote box
+  const boxMargin = 80
+  const boxPadding = 40
+  const boxWidth = CANVAS_SIZE - boxMargin * 2
+  const boxHeight = 400
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.95)'
+  ctx.beginPath()
+  ctx.roundRect(boxMargin, currentY, boxWidth, boxHeight, 16)
+  ctx.fill()
+
+  // Quote text inside box
+  const reviewText = review.review_text || 'Great service!'
+  const maxTextWidth = boxWidth - boxPadding * 2
+  const fontSize = reviewText.length > 150 ? 24 : 28
+  const quotedText = `"${reviewText}"`
+  const lines = wrapText(ctx, quotedText, maxTextWidth, fontSize)
+  const displayLines = lines.slice(0, 6)
+
+  if (lines.length > 6) {
+    displayLines[5] = displayLines[5].slice(0, -3) + '..."'
+  }
+
+  ctx.fillStyle = COLORS.text
+  ctx.font = `normal ${fontSize}px ${FONT_FAMILY}`
+  ctx.textAlign = 'center'
+
+  let textY = currentY + boxPadding + 40
+  const lineHeight = fontSize * 1.6
+
+  for (const line of displayLines) {
+    ctx.fillText(line, CANVAS_SIZE / 2, textY)
+    textY += lineHeight
+  }
+
+  // Reviewer name inside box
+  ctx.fillStyle = COLORS.textLight
+  ctx.font = `bold 22px ${FONT_FAMILY}`
+  ctx.fillText(`— ${review.reviewer_name || 'Happy Customer'}`, CANVAS_SIZE / 2, currentY + boxHeight - boxPadding)
+
+  // Company name at bottom
+  ctx.fillStyle = '#FFFFFF'
+  ctx.font = `bold 28px ${FONT_FAMILY}`
+  ctx.textAlign = 'center'
+  ctx.fillText(company.name, CANVAS_SIZE / 2, CANVAS_SIZE - 100)
+
+  console.log('[Review Graphic] Canvas created, uploading to R2')
+
+  const buffer = canvas.toBuffer('image/png')
+  const { filename } = createUploadParams(`review-${review.id}.png`, company.slug)
+  const url = await uploadToR2(buffer, `graphics/${filename}`, 'image/png')
+
+  console.log('[Review Graphic] Upload complete', { url })
+
+  return url
 }
