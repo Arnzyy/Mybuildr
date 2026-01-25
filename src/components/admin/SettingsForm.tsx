@@ -369,9 +369,14 @@ export default function SettingsForm({ company }: SettingsFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Posting Times (UK time)
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Posting Times (UK time)
+              </label>
+              <span className="text-sm font-medium text-gray-600">
+                {formData.posting_times.length}/3 slots selected
+              </span>
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
               {[
                 { hour: 6, label: '6am' },
@@ -390,37 +395,52 @@ export default function SettingsForm({ company }: SettingsFormProps) {
                 { hour: 19, label: '7pm' },
                 { hour: 20, label: '8pm' },
                 { hour: 21, label: '9pm' },
-              ].map(({ hour, label }) => (
-                <button
-                  key={hour}
-                  type="button"
-                  onClick={() => {
-                    const currentTimes = formData.posting_times
-                    const newTimes = currentTimes.includes(hour)
-                      ? currentTimes.filter(h => h !== hour)
-                      : [...currentTimes, hour].sort((a, b) => a - b)
+              ].map(({ hour, label }) => {
+                const isSelected = formData.posting_times.includes(hour)
+                const isDisabled = !isSelected && formData.posting_times.length >= 3
 
-                    // Ensure at least one time slot
-                    if (newTimes.length === 0) {
-                      alert('You must select at least one posting time')
-                      return
-                    }
+                return (
+                  <button
+                    key={hour}
+                    type="button"
+                    disabled={isDisabled}
+                    onClick={() => {
+                      const currentTimes = formData.posting_times
 
-                    setFormData(prev => ({ ...prev, posting_times: newTimes }))
-                    setSaved(false)
-                  }}
-                  className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors ${
-                    formData.posting_times.includes(hour)
-                      ? 'bg-orange-500 border-orange-500 text-white'
-                      : 'bg-white border-gray-300 text-gray-700 hover:border-orange-300'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
+                      // Check if trying to add more than 3 slots
+                      if (!isSelected && currentTimes.length >= 3) {
+                        alert('You can select a maximum of 3 posting times')
+                        return
+                      }
+
+                      const newTimes = isSelected
+                        ? currentTimes.filter(h => h !== hour)
+                        : [...currentTimes, hour].sort((a, b) => a - b)
+
+                      // Ensure at least one time slot
+                      if (newTimes.length === 0) {
+                        alert('You must select at least one posting time')
+                        return
+                      }
+
+                      setFormData(prev => ({ ...prev, posting_times: newTimes }))
+                      setSaved(false)
+                    }}
+                    className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors ${
+                      isSelected
+                        ? 'bg-orange-500 border-orange-500 text-white'
+                        : isDisabled
+                        ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-white border-gray-300 text-gray-700 hover:border-orange-300'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              Select the times you want posts to go live. Posts will be distributed across these time slots based on your posting frequency.
+              Select up to 3 times when your posts will go live. Posts will be distributed across these time slots throughout the week.
             </p>
           </div>
 
