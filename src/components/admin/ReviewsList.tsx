@@ -120,13 +120,19 @@ export default function ReviewsList({
           <div className="flex gap-6">
             {/* Graphic preview */}
             {review.graphic_url && (
-              <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+              <a
+                href={review.graphic_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 hover:ring-2 hover:ring-orange-500 transition-all cursor-pointer"
+                title="Click to view full size"
+              >
                 <img
                   src={review.graphic_url}
                   alt="Review graphic"
                   className="w-full h-full object-cover"
                 />
-              </div>
+              </a>
             )}
 
             {/* Content */}
