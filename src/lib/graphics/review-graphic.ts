@@ -1,71 +1,56 @@
-// Review graphic generator with proper font loading using node-canvas
+// Professional review graphic generator with premium design
 import { createCanvas, registerFont, loadImage, CanvasRenderingContext2D } from 'canvas'
 import { uploadToR2, createUploadParams } from '@/lib/r2/client'
-import { createAdminClient } from '@/lib/supabase/admin'
 import type { Company, Review } from '@/lib/supabase/types'
 import path from 'path'
 import fs from 'fs'
 
 // =============================================================================
-// FONT SETUP - Critical for proper text rendering
+// FONT SETUP
 // =============================================================================
 
 const FONTS_DIR = path.join(process.cwd(), 'public', 'fonts')
+let fontsLoaded = false
 
-function registerFonts() {
+function loadFonts() {
+  if (fontsLoaded) return
+
   try {
-    const regularFont = path.join(FONTS_DIR, 'Inter-Regular.ttf')
-    const boldFont = path.join(FONTS_DIR, 'Inter-Bold.ttf')
+    const regular = path.join(FONTS_DIR, 'Inter-Regular.ttf')
+    const bold = path.join(FONTS_DIR, 'Inter-Bold.ttf')
 
-    if (fs.existsSync(regularFont)) {
-      registerFont(regularFont, { family: 'Inter', weight: 'normal' })
-    }
-    if (fs.existsSync(boldFont)) {
-      registerFont(boldFont, { family: 'Inter', weight: 'bold' })
-    }
+    if (fs.existsSync(regular)) registerFont(regular, { family: 'Inter', weight: '400' })
+    if (fs.existsSync(bold)) registerFont(bold, { family: 'Inter', weight: '700' })
 
-    return true
-  } catch (error) {
-    console.error('Font registration failed:', error)
-    return false
+    fontsLoaded = true
+  } catch (e) {
+    console.error('Font load error:', e)
   }
 }
 
-// Register fonts on module load
-const fontsRegistered = registerFonts()
-const FONT_FAMILY = fontsRegistered ? 'Inter' : 'Arial, Helvetica, sans-serif'
+loadFonts()
+
+const FONT = 'Inter'
+const SIZE = 1080
 
 // =============================================================================
-// DESIGN CONSTANTS
+// DRAWING HELPERS
 // =============================================================================
 
-const CANVAS_SIZE = 1080
-const STAR_SIZE = 36
-const STAR_GAP = 12
-
-const COLORS = {
-  text: '#1F2937',
-  textLight: '#6B7280',
-  star: '#FBBF24',
-}
-
-// =============================================================================
-// HELPER FUNCTIONS
-// =============================================================================
-
+// Draw a star with golden gradient
 function drawStar(
   ctx: CanvasRenderingContext2D,
   cx: number,
   cy: number,
   size: number,
-  color: string
+  filled: boolean
 ) {
-  const spikes = 5
   const outerRadius = size / 2
   const innerRadius = outerRadius * 0.4
+  const spikes = 5
 
+  ctx.save()
   ctx.beginPath()
-  ctx.fillStyle = color
 
   for (let i = 0; i < spikes * 2; i++) {
     const radius = i % 2 === 0 ? outerRadius : innerRadius
@@ -73,140 +58,305 @@ function drawStar(
     const x = cx + Math.cos(angle) * radius
     const y = cy + Math.sin(angle) * radius
 
-    if (i === 0) {
-      ctx.moveTo(x, y)
-    } else {
-      ctx.lineTo(x, y)
-    }
+    if (i === 0) ctx.moveTo(x, y)
+    else ctx.lineTo(x, y)
   }
 
   ctx.closePath()
-  ctx.fill()
+
+  if (filled) {
+    // Golden gradient
+    const gradient = ctx.createLinearGradient(cx - outerRadius, cy - outerRadius, cx + outerRadius, cy + outerRadius)
+    gradient.addColorStop(0, '#FFD700')
+    gradient.addColorStop(0.5, '#FFC107')
+    gradient.addColorStop(1, '#FFB300')
+    ctx.fillStyle = gradient
+    ctx.fill()
+
+    // Subtle shadow
+    ctx.strokeStyle = 'rgba(0,0,0,0.1)'
+    ctx.lineWidth = 1
+    ctx.stroke()
+  } else {
+    ctx.fillStyle = '#E8E8E8'
+    ctx.fill()
+  }
+
+  ctx.restore()
 }
 
-function wrapText(
+// Draw text with shadow for depth
+function drawTextWithShadow(
   ctx: CanvasRenderingContext2D,
   text: string,
-  maxWidth: number,
-  fontSize: number
-): string[] {
-  ctx.font = `normal ${fontSize}px ${FONT_FAMILY}`
+  x: number,
+  y: number,
+  shadowColor: string = 'rgba(0,0,0,0.1)',
+  shadowBlur: number = 4,
+  shadowOffsetY: number = 2
+) {
+  ctx.save()
+  ctx.shadowColor = shadowColor
+  ctx.shadowBlur = shadowBlur
+  ctx.shadowOffsetX = 0
+  ctx.shadowOffsetY = shadowOffsetY
+  ctx.fillText(text, x, y)
+  ctx.restore()
+}
 
+// Word wrap helper
+function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
   const words = text.split(' ')
   const lines: string[] = []
-  let currentLine = ''
+  let line = ''
 
   for (const word of words) {
-    const testLine = currentLine ? `${currentLine} ${word}` : word
-    const metrics = ctx.measureText(testLine)
-
-    if (metrics.width > maxWidth && currentLine) {
-      lines.push(currentLine)
-      currentLine = word
+    const testLine = line ? `${line} ${word}` : word
+    if (ctx.measureText(testLine).width > maxWidth && line) {
+      lines.push(line)
+      line = word
     } else {
-      currentLine = testLine
+      line = testLine
     }
   }
-
-  if (currentLine) {
-    lines.push(currentLine)
-  }
-
+  if (line) lines.push(line)
   return lines
 }
 
 // =============================================================================
-// MAIN GRAPHIC GENERATOR
+// MARBLE BACKGROUND
+// =============================================================================
+
+function drawMarbleBackground(ctx: CanvasRenderingContext2D) {
+  // Base
+  ctx.fillStyle = '#FAFAFA'
+  ctx.fillRect(0, 0, SIZE, SIZE)
+
+  // Gradient overlay
+  const gradient = ctx.createRadialGradient(SIZE * 0.3, SIZE * 0.3, 0, SIZE * 0.5, SIZE * 0.5, SIZE)
+  gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)')
+  gradient.addColorStop(0.5, 'rgba(245, 245, 245, 0.5)')
+  gradient.addColorStop(1, 'rgba(235, 235, 235, 0.3)')
+  ctx.fillStyle = gradient
+  ctx.fillRect(0, 0, SIZE, SIZE)
+
+  // Texture
+  ctx.globalAlpha = 0.03
+  for (let i = 0; i < 200; i++) {
+    const x = Math.random() * SIZE
+    const y = Math.random() * SIZE
+    const r = Math.random() * 40 + 10
+
+    const noiseGradient = ctx.createRadialGradient(x, y, 0, x, y, r)
+    noiseGradient.addColorStop(0, '#CCCCCC')
+    noiseGradient.addColorStop(1, 'transparent')
+    ctx.fillStyle = noiseGradient
+    ctx.fillRect(x - r, y - r, r * 2, r * 2)
+  }
+  ctx.globalAlpha = 1
+
+  // Marble veins
+  ctx.globalAlpha = 0.02
+  ctx.strokeStyle = '#AAAAAA'
+  ctx.lineWidth = 1
+
+  for (let i = 0; i < 8; i++) {
+    ctx.beginPath()
+    ctx.moveTo(Math.random() * SIZE, 0)
+
+    let x = Math.random() * SIZE
+    for (let j = 0; j < 5; j++) {
+      x += (Math.random() - 0.5) * 200
+      ctx.quadraticCurveTo(
+        x,
+        (j + 0.5) * (SIZE / 5),
+        x + (Math.random() - 0.5) * 100,
+        (j + 1) * (SIZE / 5)
+      )
+    }
+    ctx.stroke()
+  }
+  ctx.globalAlpha = 1
+}
+
+// =============================================================================
+// MAIN GENERATOR
 // =============================================================================
 
 export async function generateReviewGraphic(
   company: Company,
   review: Review
 ): Promise<string> {
-  const primaryColor = company.primary_color || '#f97316'
+  const primaryColor = company.primary_color || '#2563EB'
 
-  console.log('[Review Graphic] Starting canvas generation', {
+  console.log('[Review Graphic] Starting premium generation', {
     reviewId: review.id,
     companyId: company.id,
-    fontsRegistered
+    fontsLoaded
   })
 
-  const canvas = createCanvas(CANVAS_SIZE, CANVAS_SIZE)
+  loadFonts()
+
+  const canvas = createCanvas(SIZE, SIZE)
   const ctx = canvas.getContext('2d')
 
-  // Background - white base
-  ctx.fillStyle = '#FFFFFF'
-  ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE)
+  // Background
+  drawMarbleBackground(ctx)
 
-  // Main colored card
-  const cardMargin = 40
-  const cardRadius = 30
+  // Header
+  let y = 100
+  ctx.fillStyle = '#1a1a1a'
+  ctx.font = `600 34px ${FONT}`
+  ctx.textAlign = 'center'
+  drawTextWithShadow(ctx, '#CustomerReview', SIZE / 2, y, 'rgba(0,0,0,0.05)', 2, 1)
 
-  ctx.fillStyle = primaryColor
-  ctx.beginPath()
-  ctx.roundRect(cardMargin, cardMargin, CANVAS_SIZE - cardMargin * 2, CANVAS_SIZE - cardMargin * 2, cardRadius)
-  ctx.fill()
+  y += 90
 
-  // Stars at top
-  let currentY = 140
-  const totalStarsWidth = (STAR_SIZE * 5) + (STAR_GAP * 4)
-  const starsStartX = (CANVAS_SIZE - totalStarsWidth) / 2
+  // Stars
+  const starSize = 48
+  const starGap = 16
+  const starsWidth = starSize * 5 + starGap * 4
+  const starsX = (SIZE - starsWidth) / 2
 
   for (let i = 0; i < 5; i++) {
-    const starX = starsStartX + (i * (STAR_SIZE + STAR_GAP)) + (STAR_SIZE / 2)
-    const color = i < review.rating ? COLORS.star : 'rgba(255,255,255,0.3)'
-    drawStar(ctx, starX, currentY, STAR_SIZE, color)
+    const cx = starsX + i * (starSize + starGap) + starSize / 2
+    drawStar(ctx, cx, y, starSize, i < review.rating)
   }
 
-  currentY += 80
+  y += starSize + 70
 
-  // White quote box
-  const boxMargin = 80
-  const boxPadding = 40
-  const boxWidth = CANVAS_SIZE - boxMargin * 2
-  const boxHeight = 400
-
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.95)'
-  ctx.beginPath()
-  ctx.roundRect(boxMargin, currentY, boxWidth, boxHeight, 16)
-  ctx.fill()
-
-  // Quote text inside box
+  // Quote text
   const reviewText = review.review_text || 'Great service!'
-  const maxTextWidth = boxWidth - boxPadding * 2
-  const fontSize = reviewText.length > 150 ? 24 : 28
-  const quotedText = `"${reviewText}"`
-  const lines = wrapText(ctx, quotedText, maxTextWidth, fontSize)
-  const displayLines = lines.slice(0, 6)
+  const maxTextWidth = SIZE - 180
+  const textLength = reviewText.length
 
+  // Dynamic font size
+  let fontSize = 42
+  if (textLength > 200) fontSize = 30
+  else if (textLength > 150) fontSize = 34
+  else if (textLength > 100) fontSize = 38
+
+  ctx.font = `400 ${fontSize}px ${FONT}`
+  const lines = wrapText(ctx, reviewText, maxTextWidth)
+
+  // Limit lines
+  let displayLines = lines.slice(0, 6)
   if (lines.length > 6) {
-    displayLines[5] = displayLines[5].slice(0, -3) + '..."'
+    let lastLine = displayLines[5]
+    if (lastLine.length > 35) lastLine = lastLine.slice(0, 35)
+    displayLines[5] = lastLine + '...'
   }
 
-  ctx.fillStyle = COLORS.text
-  ctx.font = `normal ${fontSize}px ${FONT_FAMILY}`
+  // Opening quote mark
+  ctx.fillStyle = primaryColor
+  ctx.font = `700 80px Georgia, serif`
+  ctx.globalAlpha = 0.15
+  ctx.fillText('"', SIZE / 2 - ctx.measureText(displayLines[0] || '').width / 2 - 30, y + 10)
+  ctx.globalAlpha = 1
+
+  // Quote text
+  ctx.fillStyle = '#2D3748'
+  ctx.font = `400 ${fontSize}px ${FONT}`
   ctx.textAlign = 'center'
 
-  let textY = currentY + boxPadding + 40
   const lineHeight = fontSize * 1.6
 
   for (const line of displayLines) {
-    ctx.fillText(line, CANVAS_SIZE / 2, textY)
-    textY += lineHeight
+    ctx.fillText(line, SIZE / 2, y)
+    y += lineHeight
   }
 
-  // Reviewer name inside box
-  ctx.fillStyle = COLORS.textLight
-  ctx.font = `bold 22px ${FONT_FAMILY}`
-  ctx.fillText(`— ${review.reviewer_name || 'Happy Customer'}`, CANVAS_SIZE / 2, currentY + boxHeight - boxPadding)
+  y += 30
 
-  // Company name at bottom
-  ctx.fillStyle = '#FFFFFF'
-  ctx.font = `bold 28px ${FONT_FAMILY}`
+  // Avatar with initials
+  const avatarSize = 80
+  const avatarX = SIZE / 2
+  const avatarY = y + avatarSize / 2
+
+  ctx.save()
+
+  // Outer ring
+  ctx.beginPath()
+  ctx.arc(avatarX, avatarY, avatarSize / 2 + 4, 0, Math.PI * 2)
+  ctx.fillStyle = primaryColor
+  ctx.fill()
+
+  // Inner circle
+  ctx.beginPath()
+  ctx.arc(avatarX, avatarY, avatarSize / 2, 0, Math.PI * 2)
+
+  const avatarGradient = ctx.createLinearGradient(
+    avatarX - avatarSize/2, avatarY - avatarSize/2,
+    avatarX + avatarSize/2, avatarY + avatarSize/2
+  )
+  avatarGradient.addColorStop(0, '#F3F4F6')
+  avatarGradient.addColorStop(1, '#E5E7EB')
+  ctx.fillStyle = avatarGradient
+  ctx.fill()
+
+  // Initials
+  const reviewerName = review.reviewer_name || 'Happy Customer'
+  const initials = reviewerName
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+
+  ctx.fillStyle = '#4B5563'
+  ctx.font = `600 32px ${FONT}`
   ctx.textAlign = 'center'
-  ctx.fillText(company.name, CANVAS_SIZE / 2, CANVAS_SIZE - 100)
+  ctx.textBaseline = 'middle'
+  ctx.fillText(initials, avatarX, avatarY)
+  ctx.textBaseline = 'alphabetic'
 
-  console.log('[Review Graphic] Canvas created, uploading to R2')
+  ctx.restore()
+
+  y += avatarSize + 25
+
+  // Reviewer name
+  ctx.fillStyle = '#1F2937'
+  ctx.font = `600 28px ${FONT}`
+  ctx.textAlign = 'center'
+  ctx.fillText(reviewerName, SIZE / 2, y)
+
+  // Footer
+  const footerY = SIZE - 80
+
+  // Company name
+  ctx.fillStyle = primaryColor
+  ctx.font = `700 26px ${FONT}`
+  ctx.textAlign = 'left'
+  ctx.fillText(company.name, 90, footerY + 8)
+
+  // Logo placeholder
+  ctx.save()
+  ctx.fillStyle = '#1a1a1a'
+  ctx.font = `700 18px ${FONT}`
+  ctx.textAlign = 'center'
+
+  const placeholderWidth = 80
+  const placeholderHeight = 40
+  const placeholderX = SIZE - 90 - placeholderWidth/2
+
+  ctx.strokeStyle = '#1a1a1a'
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.roundRect(placeholderX, footerY - placeholderHeight/2, placeholderWidth, placeholderHeight, 8)
+  ctx.stroke()
+
+  ctx.fillText('LOGO', SIZE - 90, footerY + 6)
+  ctx.restore()
+
+  // Subtle line
+  ctx.strokeStyle = 'rgba(0,0,0,0.05)'
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.moveTo(90, footerY - 40)
+  ctx.lineTo(SIZE - 90, footerY - 40)
+  ctx.stroke()
+
+  console.log('[Review Graphic] Canvas created, uploading')
 
   const buffer = canvas.toBuffer('image/png')
   const { filename } = createUploadParams(`review-${review.id}.png`, company.slug)
