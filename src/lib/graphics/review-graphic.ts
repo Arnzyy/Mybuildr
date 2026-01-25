@@ -44,33 +44,31 @@ export async function generateReviewGraphic(
   const backgroundColor = company.primary_color || '#1e3a5f'
   const accentColor = company.secondary_color || '#f97316'
 
-  // Generate stars string
-  const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating)
+  // Generate star circles instead of unicode stars
+  const starCircles = Array.from({ length: 5 }, (_, i) => {
+    const x = 390 + (i * 60)
+    const isFilled = i < review.rating
+    return `<circle cx="${x}" cy="180" r="20" fill="${isFilled ? '#fbbf24' : 'rgba(255,255,255,0.2)'}" />`
+  }).join('\n      ')
 
   // Truncate and split review text into lines
   const reviewText = review.review_text || ''
-  const truncated = reviewText.length > 250
-    ? reviewText.substring(0, 250) + '...'
+  const truncated = reviewText.length > 200
+    ? reviewText.substring(0, 200) + '...'
     : reviewText
 
-  const lines = splitTextToLines(truncated, 40)
-  const maxLines = 5
+  const lines = splitTextToLines(truncated, 35)
+  const maxLines = 6
   const displayLines = lines.slice(0, maxLines)
 
   // Build tspan elements for review text
   const tspanElements = displayLines.map((line, index) =>
-    `<tspan x="540" dy="${index === 0 ? 0 : 50}">${escapeXml(line)}</tspan>`
+    `<tspan x="540" dy="${index === 0 ? 0 : 42}">${escapeXml(line)}</tspan>`
   ).join('\n        ')
 
-  // Create SVG
+  // Create SVG with embedded fonts
   const svg = `
     <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <style>
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap');
-        </style>
-      </defs>
-
       <!-- Background -->
       <rect width="100%" height="100%" fill="${backgroundColor}"/>
 
@@ -79,35 +77,33 @@ export async function generateReviewGraphic(
 
       <!-- Subtle pattern -->
       <pattern id="dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
-        <circle cx="2" cy="2" r="1.5" fill="rgba(255,255,255,0.03)"/>
+        <circle cx="2" cy="2" r="1.5" fill="rgba(255,255,255,0.05)"/>
       </pattern>
       <rect width="100%" height="100%" fill="url(#dots)"/>
 
-      <!-- Stars -->
-      <text x="540" y="200" text-anchor="middle" font-size="56" fill="#fbbf24" font-family="Arial, sans-serif">${stars}</text>
+      <!-- Star rating using circles -->
+      ${starCircles}
 
-      <!-- Opening quote -->
-      <text x="80" y="340" font-size="120" fill="${accentColor}" font-family="Georgia, serif">"</text>
+      <!-- Hashtag icon -->
+      <text x="120" y="330" font-size="60" fill="${accentColor}" font-family="Arial, sans-serif" font-weight="bold">#YourComments</text>
+
+      <!-- Review text box -->
+      <rect x="100" y="380" width="880" height="${Math.max(300, displayLines.length * 45 + 80)}" rx="12" fill="rgba(255,255,255,0.95)"/>
 
       <!-- Review text -->
-      <text x="540" y="420" text-anchor="middle" font-size="32" fill="white" font-family="Arial, sans-serif">
+      <text x="540" y="440" text-anchor="middle" font-size="28" fill="#1a1a1a" font-family="Arial, sans-serif" style="line-height: 1.4;">
         ${tspanElements}
       </text>
 
-      <!-- Closing quote -->
-      <text x="980" y="${420 + (displayLines.length * 50) + 40}" font-size="120" fill="${accentColor}" font-family="Georgia, serif">"</text>
-
       <!-- Reviewer name -->
-      <text x="80" y="880" font-size="32" fill="white" font-weight="bold" font-family="Arial, sans-serif">— ${escapeXml(review.reviewer_name || 'Happy Customer')}</text>
+      <text x="540" y="${440 + (displayLines.length * 42) + 60}" text-anchor="middle" font-size="22" fill="#333333" font-family="Arial, sans-serif" font-weight="bold">- ${escapeXml(review.reviewer_name || 'Happy Customer')}</text>
 
-      <!-- Source badge -->
-      ${review.source && review.source !== 'manual' ? `
-      <rect x="80" y="900" width="150" height="35" rx="6" fill="rgba(255,255,255,0.1)"/>
-      <text x="95" y="924" font-size="16" fill="rgba(255,255,255,0.7)" font-family="Arial, sans-serif">via ${review.source}</text>
-      ` : ''}
+      <!-- Logo placeholder -->
+      <rect x="450" y="880" width="180" height="60" rx="8" fill="rgba(255,255,255,0.15)"/>
+      <text x="540" y="918" text-anchor="middle" font-size="24" fill="white" font-family="Arial, sans-serif" font-weight="bold">LOGO</text>
 
-      <!-- Company name -->
-      <text x="80" y="1020" font-size="24" fill="rgba(255,255,255,0.5)" font-family="Arial, sans-serif">${escapeXml(company.name)}</text>
+      <!-- Company name at bottom -->
+      <text x="540" y="1020" text-anchor="middle" font-size="20" fill="rgba(255,255,255,0.6)" font-family="Arial, sans-serif">${escapeXml(company.name)}</text>
 
       <!-- Accent bar at bottom -->
       <rect y="1072" width="100%" height="8" fill="${accentColor}"/>
