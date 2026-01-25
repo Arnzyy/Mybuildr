@@ -209,20 +209,47 @@ export async function generateReviewGraphic(
   const maxTextWidth = cardWidth - 120
   const textLength = reviewText.length
 
-  let fontSize = 28
-  if (textLength > 200) fontSize = 22
-  else if (textLength > 150) fontSize = 24
-  else if (textLength > 100) fontSize = 26
+  // Dynamic sizing - larger for short reviews, smaller for very long
+  let fontSize = 38
+  let maxLines = 5
+
+  if (textLength > 400) {
+    fontSize = 18
+    maxLines = 7
+  } else if (textLength > 300) {
+    fontSize = 20
+    maxLines = 6
+  } else if (textLength > 200) {
+    fontSize = 22
+    maxLines = 5
+  } else if (textLength > 150) {
+    fontSize = 24
+    maxLines = 5
+  } else if (textLength > 100) {
+    fontSize = 26
+    maxLines = 5
+  } else if (textLength > 50) {
+    fontSize = 32
+    maxLines = 4
+  } else if (textLength > 20) {
+    fontSize = 36
+    maxLines = 3
+  }
+  // else defaults to 38px, 5 lines for very short reviews
 
   ctx.font = `400 ${fontSize}px ${FONT}`
   const lines = wrapText(ctx, reviewText, maxTextWidth)
 
-  // Limit lines
-  let displayLines = lines.slice(0, 5)
-  if (lines.length > 5) {
-    let lastLine = displayLines[4]
-    if (lastLine.length > 40) lastLine = lastLine.slice(0, 40)
-    displayLines[4] = lastLine + '...'
+  // Limit lines and add ellipsis if needed
+  let displayLines = lines.slice(0, maxLines)
+  if (lines.length > maxLines) {
+    let lastLine = displayLines[maxLines - 1]
+    // Trim to reasonable length and add ellipsis
+    const maxLastLineLength = textLength > 300 ? 60 : 40
+    if (lastLine.length > maxLastLineLength) {
+      lastLine = lastLine.slice(0, maxLastLineLength).trim()
+    }
+    displayLines[maxLines - 1] = lastLine + '...'
   }
 
   ctx.fillStyle = '#374151'
