@@ -26,11 +26,14 @@ export async function generateReviewGraphic(
       companyId: company.id
     })
 
-    // Generate stars
+    // Generate stars using SVG paths (font-independent)
+    const starPath = 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z'
     const stars = Array.from({ length: 5 }, (_, i) => {
-      const x = 390 + (i * 60)
+      const x = 370 + (i * 68)
       const fillColor = i < review.rating ? '#fbbf24' : 'rgba(255,255,255,0.3)'
-      return `<text x="${x}" y="200" font-size="48" fill="${fillColor}" text-anchor="middle" font-family="Arial,sans-serif">★</text>`
+      return `<g transform="translate(${x}, 160)">
+        <path d="${starPath}" fill="${fillColor}" transform="scale(1.8)"/>
+      </g>`
     }).join('\n      ')
 
     // Truncate review text
