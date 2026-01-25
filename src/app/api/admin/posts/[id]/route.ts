@@ -76,7 +76,7 @@ export async function PUT(
       return NextResponse.json({ error: 'No company found' }, { status: 404 })
     }
 
-    const { caption, hashtags } = await request.json()
+    const { caption, hashtags, scheduled_for } = await request.json()
 
     const admin = createAdminClient()
 
@@ -93,9 +93,15 @@ export async function PUT(
       return NextResponse.json({ error: 'Post not found or not editable' }, { status: 404 })
     }
 
+    // Build update object
+    const updateData: any = {}
+    if (caption !== undefined) updateData.caption = caption
+    if (hashtags !== undefined) updateData.hashtags = hashtags
+    if (scheduled_for !== undefined) updateData.scheduled_for = scheduled_for
+
     await admin
       .from('scheduled_posts')
-      .update({ caption, hashtags })
+      .update(updateData)
       .eq('id', id)
 
     return NextResponse.json({ success: true })

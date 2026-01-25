@@ -57,6 +57,7 @@ export interface Company {
   // Review Posting Settings
   review_posting_enabled: boolean
   review_min_rating: number
+  review_post_frequency: number // Post a review every N posts (e.g., 3 = every 3rd post)
 }
 
 export interface Project {

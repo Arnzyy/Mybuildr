@@ -52,6 +52,7 @@ export default function SettingsForm({ company }: SettingsFormProps) {
     // Review Posting Settings
     review_posting_enabled: company.review_posting_enabled ?? true,
     review_min_rating: company.review_min_rating ?? 4,
+    review_post_frequency: company.review_post_frequency ?? 3,
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -77,6 +78,7 @@ export default function SettingsForm({ company }: SettingsFormProps) {
             services: formData.services.split(',').map(s => s.trim()).filter(Boolean),
             areas_covered: formData.areas_covered.split(',').map(s => s.trim()).filter(Boolean),
             posts_per_week: Number(formData.posts_per_week),
+            review_post_frequency: Number(formData.review_post_frequency),
             hashtag_preferences: formData.hashtag_preferences.split(',').map(s => s.trim().replace(/^#/, '')).filter(Boolean),
           }
         }),
@@ -470,23 +472,46 @@ export default function SettingsForm({ company }: SettingsFormProps) {
           </div>
 
           {formData.review_posting_enabled && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Minimum Rating for Reviews
-              </label>
-              <select
-                name="review_min_rating"
-                value={formData.review_min_rating}
-                onChange={handleChange}
-                className="w-full sm:w-48 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-              >
-                <option value={5}>5 stars only</option>
-                <option value={4}>4+ stars</option>
-                <option value={3}>3+ stars</option>
-              </select>
-              <p className="text-xs text-gray-500 mt-2">
-                Only reviews with this rating or higher will be posted
-              </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Minimum Rating for Reviews
+                </label>
+                <select
+                  name="review_min_rating"
+                  value={formData.review_min_rating}
+                  onChange={handleChange}
+                  className="w-full sm:w-48 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                >
+                  <option value={5}>5 stars only</option>
+                  <option value={4}>4+ stars</option>
+                  <option value={3}>3+ stars</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-2">
+                  Only reviews with this rating or higher will be posted
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Review Post Frequency
+                </label>
+                <select
+                  name="review_post_frequency"
+                  value={formData.review_post_frequency || 3}
+                  onChange={handleChange}
+                  className="w-full sm:w-48 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                >
+                  {Array.from({ length: 20 }, (_, i) => i + 1).map(num => (
+                    <option key={num} value={num}>
+                      {num === 1 ? 'Every post' : num === 3 ? `Every ${num}rd post (Recommended)` : `Every ${num}th post`}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-2">
+                  How often to post review graphics. Reviews won't repeat for at least 60 days.
+                </p>
+              </div>
             </div>
           )}
         </div>

@@ -140,7 +140,7 @@ async function getNextReview(companyId: string, minRating: number): Promise<Revi
 
   if (!reviews || reviews.length === 0) return null
 
-  // If all reviews have been posted, check for 30-day cooldown on least-recent
+  // If all reviews have been posted, check for 60-day cooldown on least-recent
   const unpostedReviews = reviews.filter(r => !r.used_in_post)
   if (unpostedReviews.length > 0) {
     // Pick a random unposted review
@@ -151,7 +151,7 @@ async function getNextReview(companyId: string, minRating: number): Promise<Revi
   const oldestPosted = reviews[0]
   if (oldestPosted.last_posted_at) {
     const daysSince = (Date.now() - new Date(oldestPosted.last_posted_at).getTime()) / (24 * 60 * 60 * 1000)
-    if (daysSince < 30) {
+    if (daysSince < 60) {
       return null // All reviews on cooldown
     }
   }
@@ -172,8 +172,8 @@ async function updateReviewAfterScheduling(reviewId: string): Promise<void> {
     .eq('id', reviewId)
 }
 
-// Decide whether next post should be a review (roughly every 3rd post)
-async function shouldPostReview(companyId: string): Promise<boolean> {
+// Decide whether next post should be a review based on frequency setting
+async function shouldPostReview(companyId: string, frequency: number = 3): Promise<boolean> {
   const supabase = createAdminClient()
 
   // Count recent posts to determine if we should post a review
@@ -182,13 +182,13 @@ async function shouldPostReview(companyId: string): Promise<boolean> {
     .select('review_id')
     .eq('company_id', companyId)
     .order('created_at', { ascending: false })
-    .limit(3)
+    .limit(frequency)
 
   if (!recentPosts || recentPosts.length === 0) return false
 
-  // If last 2 posts were images (no review_id), next should be a review
+  // If last (frequency - 1) posts were images (no review_id), next should be a review
   const recentReviewCount = recentPosts.filter(p => p.review_id).length
-  return recentReviewCount === 0 && recentPosts.length >= 2
+  return recentReviewCount === 0 && recentPosts.length >= (frequency - 1)
 }
 
 // Schedule a new post for a company
@@ -217,7 +217,7 @@ export async function schedulePost(company: Company, excludeProjectIds: string[]
     )
 
     // Decide whether to post a review or image
-    const postReview = company.review_posting_enabled && await shouldPostReview(company.id)
+    const postReview = company.review_posting_enabled && await shouldPostReview(company.id, company.review_post_frequency || 3)
 
     if (postReview) {
       // Try to get a review to post

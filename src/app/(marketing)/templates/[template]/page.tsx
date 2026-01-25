@@ -49,6 +49,7 @@ const PREVIEW_COMPANY: Company = {
   hashtag_preferences: null,
   review_posting_enabled: true,
   review_min_rating: 4,
+  review_post_frequency: 3,
 }
 
 const PREVIEW_PROJECTS: Project[] = [
