@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, isSameDay } from 'date-fns'
-import { Calendar, Check, X, AlertCircle, Edit2, Trash2 } from 'lucide-react'
+import { Calendar, Check, X, AlertCircle, Edit2, Trash2, Layers } from 'lucide-react'
 import MediaPreview from './MediaPreview'
 
 interface Post {
@@ -16,7 +16,7 @@ interface Post {
   status: string
   posted_at: string | null
   error_message: string | null
-  project: { title: string } | null
+  project: { title: string; images: string[] } | null
 }
 
 interface PostsTimelineProps {
@@ -221,7 +221,15 @@ export default function PostsTimeline({ initialPosts }: PostsTimelineProps) {
                                 {/* Content */}
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-start justify-between gap-2 mb-1">
-                                    {getStatusBadge(post.status)}
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      {getStatusBadge(post.status)}
+                                      {post.project && post.project.images && post.project.images.length > 1 && (
+                                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-medium">
+                                          <Layers className="w-3 h-3" />
+                                          {post.project.images.length}
+                                        </span>
+                                      )}
+                                    </div>
 
                                     {post.status === 'pending' && (
                                       <div className="flex gap-1">

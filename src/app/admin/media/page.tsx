@@ -1,9 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
-import { getCompanyForUser, getCompanyMedia } from '@/lib/supabase/queries'
+import { getCompanyForUser, getCompanyProjects } from '@/lib/supabase/queries'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { hasFeature } from '@/lib/features'
 import Link from 'next/link'
-import MediaLibrary from '@/components/admin/MediaLibrary'
+import MediaLibraryView from '@/components/admin/MediaLibraryView'
 import { Plus, Lock, Image as ImageIcon } from 'lucide-react'
 
 export default async function MediaPage() {
@@ -38,7 +39,19 @@ export default async function MediaPage() {
     )
   }
 
-  const media = await getCompanyMedia(company.id)
+  // Get projects (these will post as carousels)
+  const projects = await getCompanyProjects(company.id)
+
+  // Get individual images (not part of any project)
+  const admin = createAdminClient()
+  const { data: individualImages } = await admin
+    .from('media_library')
+    .select('*')
+    .eq('company_id', company.id)
+    .is('source_project_id', null)
+    .order('created_at', { ascending: false })
+
+  const hasContent = projects.length > 0 || (individualImages && individualImages.length > 0)
 
   return (
     <div>
@@ -53,7 +66,7 @@ export default async function MediaPage() {
         </div>
       </div>
 
-      {media.length === 0 ? (
+      {!hasContent ? (
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <ImageIcon className="w-8 h-8 text-gray-400" />
@@ -64,7 +77,10 @@ export default async function MediaPage() {
           </p>
         </div>
       ) : (
-        <MediaLibrary initialMedia={media} />
+        <MediaLibraryView
+          projects={projects}
+          individualImages={individualImages || []}
+        />
       )}
     </div>
   )

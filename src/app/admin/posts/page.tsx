@@ -52,7 +52,7 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
     .from('scheduled_posts')
     .select(`
       *,
-      project:projects(title)
+      project:projects(title, images)
     `)
     .eq('company_id', company.id)
     .order('scheduled_for', { ascending: true })
