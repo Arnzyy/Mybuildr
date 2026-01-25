@@ -187,7 +187,7 @@ export async function generateReviewGraphic(
   company: Company,
   review: Review
 ): Promise<string> {
-  const primaryColor = company.primary_color || '#2563EB'
+  const primaryColor = company.primary_color || '#1e3a5f'
 
   console.log('[Review Graphic] Starting premium generation', {
     reviewId: review.id,
@@ -200,161 +200,112 @@ export async function generateReviewGraphic(
   const canvas = createCanvas(SIZE, SIZE)
   const ctx = canvas.getContext('2d')
 
-  // Background
-  drawMarbleBackground(ctx)
+  // Solid colored background (company's primary color or default)
+  ctx.fillStyle = primaryColor
+  ctx.fillRect(0, 0, SIZE, SIZE)
 
   // Header
-  let y = 100
-  ctx.fillStyle = '#1a1a1a'
-  ctx.font = `600 34px ${FONT}`
+  let y = 120
+  ctx.fillStyle = 'rgba(255,255,255,0.9)'
+  ctx.font = `700 38px ${FONT}`
   ctx.textAlign = 'center'
-  drawTextWithShadow(ctx, '#CustomerReview', SIZE / 2, y, 'rgba(0,0,0,0.05)', 2, 1)
+  ctx.fillText('CUSTOMER REVIEW', SIZE / 2, y)
 
-  y += 90
+  y += 100
 
   // Stars
-  const starSize = 48
-  const starGap = 16
+  const starSize = 52
+  const starGap = 18
   const starsWidth = starSize * 5 + starGap * 4
   const starsX = (SIZE - starsWidth) / 2
 
+  ctx.save()
   for (let i = 0; i < 5; i++) {
     const cx = starsX + i * (starSize + starGap) + starSize / 2
-    drawStar(ctx, cx, y, starSize, i < review.rating)
-  }
+    const filled = i < review.rating
 
-  y += starSize + 70
+    // Draw star shape
+    const outerRadius = starSize / 2
+    const innerRadius = outerRadius * 0.4
+    const spikes = 5
+
+    ctx.beginPath()
+    for (let j = 0; j < spikes * 2; j++) {
+      const radius = j % 2 === 0 ? outerRadius : innerRadius
+      const angle = (Math.PI / 2) * -1 + (j * Math.PI) / spikes
+      const x = cx + Math.cos(angle) * radius
+      const y_pos = y + Math.sin(angle) * radius
+
+      if (j === 0) ctx.moveTo(x, y_pos)
+      else ctx.lineTo(x, y_pos)
+    }
+    ctx.closePath()
+
+    if (filled) {
+      ctx.fillStyle = '#FFD700'
+      ctx.fill()
+    } else {
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)'
+      ctx.lineWidth = 2
+      ctx.stroke()
+    }
+  }
+  ctx.restore()
+
+  y += starSize + 80
 
   // Quote text
   const reviewText = review.review_text || 'Great service!'
-  const maxTextWidth = SIZE - 180
+  const maxTextWidth = SIZE - 200
   const textLength = reviewText.length
 
   // Dynamic font size
-  let fontSize = 42
-  if (textLength > 200) fontSize = 30
-  else if (textLength > 150) fontSize = 34
-  else if (textLength > 100) fontSize = 38
+  let fontSize = 36
+  if (textLength > 200) fontSize = 28
+  else if (textLength > 150) fontSize = 30
+  else if (textLength > 100) fontSize = 32
 
   ctx.font = `400 ${fontSize}px ${FONT}`
-  const lines = wrapText(ctx, reviewText, maxTextWidth)
+  const quotedText = `"${reviewText}"`
+  const lines = wrapText(ctx, quotedText, maxTextWidth)
 
   // Limit lines
-  let displayLines = lines.slice(0, 6)
-  if (lines.length > 6) {
-    let lastLine = displayLines[5]
-    if (lastLine.length > 35) lastLine = lastLine.slice(0, 35)
-    displayLines[5] = lastLine + '...'
+  let displayLines = lines.slice(0, 5)
+  if (lines.length > 5) {
+    let lastLine = displayLines[4]
+    if (lastLine.length > 40) lastLine = lastLine.slice(0, 40)
+    displayLines[4] = lastLine + '..."'
   }
 
-  // Opening quote mark
-  ctx.fillStyle = primaryColor
-  ctx.font = `700 80px Georgia, serif`
-  ctx.globalAlpha = 0.15
-  ctx.fillText('"', SIZE / 2 - ctx.measureText(displayLines[0] || '').width / 2 - 30, y + 10)
-  ctx.globalAlpha = 1
-
   // Quote text
-  ctx.fillStyle = '#2D3748'
+  ctx.fillStyle = 'rgba(255,255,255,0.95)'
   ctx.font = `400 ${fontSize}px ${FONT}`
   ctx.textAlign = 'center'
 
-  const lineHeight = fontSize * 1.6
+  const lineHeight = fontSize * 1.7
 
   for (const line of displayLines) {
     ctx.fillText(line, SIZE / 2, y)
     y += lineHeight
   }
 
-  y += 30
-
-  // Avatar with initials
-  const avatarSize = 80
-  const avatarX = SIZE / 2
-  const avatarY = y + avatarSize / 2
-
-  ctx.save()
-
-  // Outer ring
-  ctx.beginPath()
-  ctx.arc(avatarX, avatarY, avatarSize / 2 + 4, 0, Math.PI * 2)
-  ctx.fillStyle = primaryColor
-  ctx.fill()
-
-  // Inner circle
-  ctx.beginPath()
-  ctx.arc(avatarX, avatarY, avatarSize / 2, 0, Math.PI * 2)
-
-  const avatarGradient = ctx.createLinearGradient(
-    avatarX - avatarSize/2, avatarY - avatarSize/2,
-    avatarX + avatarSize/2, avatarY + avatarSize/2
-  )
-  avatarGradient.addColorStop(0, '#F3F4F6')
-  avatarGradient.addColorStop(1, '#E5E7EB')
-  ctx.fillStyle = avatarGradient
-  ctx.fill()
-
-  // Initials
-  const reviewerName = review.reviewer_name || 'Happy Customer'
-  const initials = reviewerName
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
-
-  ctx.fillStyle = '#4B5563'
-  ctx.font = `600 32px ${FONT}`
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.fillText(initials, avatarX, avatarY)
-  ctx.textBaseline = 'alphabetic'
-
-  ctx.restore()
-
-  y += avatarSize + 25
+  y += 60
 
   // Reviewer name
-  ctx.fillStyle = '#1F2937'
-  ctx.font = `600 28px ${FONT}`
+  const reviewerName = review.reviewer_name || 'Happy Customer'
+  ctx.fillStyle = 'rgba(255,255,255,0.85)'
+  ctx.font = `600 32px ${FONT}`
   ctx.textAlign = 'center'
-  ctx.fillText(reviewerName, SIZE / 2, y)
+  ctx.fillText(`— ${reviewerName}`, SIZE / 2, y)
 
   // Footer
-  const footerY = SIZE - 80
+  const footerY = SIZE - 100
 
-  // Company name
-  ctx.fillStyle = primaryColor
-  ctx.font = `700 26px ${FONT}`
-  ctx.textAlign = 'left'
-  ctx.fillText(company.name, 90, footerY + 8)
-
-  // Logo placeholder
-  ctx.save()
-  ctx.fillStyle = '#1a1a1a'
-  ctx.font = `700 18px ${FONT}`
+  // Company name centered at bottom
+  ctx.fillStyle = 'rgba(255,255,255,0.9)'
+  ctx.font = `700 32px ${FONT}`
   ctx.textAlign = 'center'
-
-  const placeholderWidth = 80
-  const placeholderHeight = 40
-  const placeholderX = SIZE - 90 - placeholderWidth/2
-
-  ctx.strokeStyle = '#1a1a1a'
-  ctx.lineWidth = 2
-  ctx.beginPath()
-  ctx.roundRect(placeholderX, footerY - placeholderHeight/2, placeholderWidth, placeholderHeight, 8)
-  ctx.stroke()
-
-  ctx.fillText('LOGO', SIZE - 90, footerY + 6)
-  ctx.restore()
-
-  // Subtle line
-  ctx.strokeStyle = 'rgba(0,0,0,0.05)'
-  ctx.lineWidth = 1
-  ctx.beginPath()
-  ctx.moveTo(90, footerY - 40)
-  ctx.lineTo(SIZE - 90, footerY - 40)
-  ctx.stroke()
+  ctx.fillText(company.name, SIZE / 2, footerY)
 
   console.log('[Review Graphic] Canvas created, uploading')
 
