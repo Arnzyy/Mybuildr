@@ -195,7 +195,13 @@ export default function PostsTimeline({ initialPosts }: PostsTimelineProps) {
                     {[8, 12, 18].map(hour => {
                       const post = day.posts.find(p => {
                         const postDate = new Date(p.scheduled_for)
-                        return postDate.getHours() === hour
+                        // Convert to UK timezone to get the actual scheduled hour
+                        const ukHour = parseInt(postDate.toLocaleString('en-GB', {
+                          timeZone: 'Europe/London',
+                          hour: '2-digit',
+                          hour12: false
+                        }))
+                        return ukHour === hour
                       })
 
                       return (
