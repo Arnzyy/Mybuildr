@@ -1,3 +1,4 @@
+import React from 'react'
 import { ImageResponse } from '@vercel/og'
 import { uploadToR2, createUploadParams } from '@/lib/r2/client'
 import type { Company, Review } from '@/lib/supabase/types'
@@ -30,23 +31,31 @@ export async function generateReviewGraphic(
   company: Company,
   review: Review
 ): Promise<string> {
-  const width = 1080
-  const height = 1080
-  const backgroundColor = company.primary_color || '#1e3a5f'
-  const accentColor = company.secondary_color || '#f97316'
+  try {
+    const width = 1080
+    const height = 1080
+    const backgroundColor = company.primary_color || '#1e3a5f'
+    const accentColor = company.secondary_color || '#f97316'
 
-  // Truncate and split review text into lines
-  const reviewText = review.review_text || ''
-  const truncated = reviewText.length > 200
-    ? reviewText.substring(0, 200) + '...'
-    : reviewText
+    // Truncate and split review text into lines
+    const reviewText = review.review_text || ''
+    const truncated = reviewText.length > 200
+      ? reviewText.substring(0, 200) + '...'
+      : reviewText
 
-  const lines = splitTextToLines(truncated, 40)
-  const maxLines = 5
-  const displayLines = lines.slice(0, maxLines)
+    const lines = splitTextToLines(truncated, 40)
+    const maxLines = 5
+    const displayLines = lines.slice(0, maxLines)
 
-  // Generate the image using Vercel OG
-  const imageResponse = new ImageResponse(
+    console.log('[Review Graphic] Starting generation', {
+      reviewId: review.id,
+      companyId: company.id,
+      reviewTextLength: reviewText.length,
+      displayLinesCount: displayLines.length
+    })
+
+    // Generate the image using Vercel OG
+    const imageResponse = new ImageResponse(
     (
       <div
         style={{
@@ -182,12 +191,30 @@ export async function generateReviewGraphic(
     }
   )
 
-  // Convert the Response to a buffer
-  const arrayBuffer = await imageResponse.arrayBuffer()
-  const buffer = Buffer.from(arrayBuffer)
+    console.log('[Review Graphic] ImageResponse created, converting to buffer')
 
-  const { filename } = createUploadParams(`review-${review.id}.png`, company.slug)
-  const url = await uploadToR2(buffer, `graphics/${filename}`, 'image/png')
+    // Convert the Response to a buffer
+    const arrayBuffer = await imageResponse.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
 
-  return url
+    console.log('[Review Graphic] Buffer created, uploading to R2', {
+      bufferSize: buffer.length
+    })
+
+    const { filename } = createUploadParams(`review-${review.id}.png`, company.slug)
+    const url = await uploadToR2(buffer, `graphics/${filename}`, 'image/png')
+
+    console.log('[Review Graphic] Upload complete', { url })
+
+    return url
+  } catch (error) {
+    console.error('[Review Graphic] Generation failed:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      reviewId: review.id,
+      companyId: company.id
+    })
+    throw error
+  }
 }

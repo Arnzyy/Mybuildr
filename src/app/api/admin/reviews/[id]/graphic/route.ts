@@ -44,10 +44,25 @@ export async function POST(
     }
 
     // Generate graphic
-    const graphicUrl = await generateReviewGraphic(
-      company as Company,
-      review as Review
-    )
+    let graphicUrl
+    try {
+      graphicUrl = await generateReviewGraphic(
+        company as Company,
+        review as Review
+      )
+    } catch (graphicError) {
+      console.error('Graphic generation error details:', {
+        error: graphicError,
+        message: graphicError instanceof Error ? graphicError.message : 'Unknown error',
+        stack: graphicError instanceof Error ? graphicError.stack : undefined,
+        companyId: company.id,
+        reviewId: review.id
+      })
+      return NextResponse.json({
+        error: 'Failed to generate graphic',
+        details: graphicError instanceof Error ? graphicError.message : 'Unknown error'
+      }, { status: 500 })
+    }
 
     // Update review with graphic URL
     await admin
@@ -61,6 +76,9 @@ export async function POST(
     })
   } catch (error) {
     console.error('Graphic generation error:', error)
-    return NextResponse.json({ error: 'Failed to generate graphic' }, { status: 500 })
+    return NextResponse.json({
+      error: 'Failed to generate graphic',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
