@@ -56,7 +56,8 @@ function getNextPostingSlot(
 }
 
 // Get next available image from media library using rotation logic
-async function getNextImage(companyId: string): Promise<MediaItem | null> {
+// Returns a single media item, but if it's part of a multi-image project, we'll post the whole project as carousel
+async function getNextImage(companyId: string, excludeProjectIds: string[] = []): Promise<MediaItem | null> {
   const supabase = createAdminClient()
 
   // Get available media items, ordered by times_posted (ascending) and last_posted_at (ascending, nulls first)
@@ -67,13 +68,20 @@ async function getNextImage(companyId: string): Promise<MediaItem | null> {
     .eq('is_available', true)
     .order('times_posted', { ascending: true })
     .order('last_posted_at', { ascending: true, nullsFirst: true })
-    .limit(10)
+    .limit(50)
 
   if (!media || media.length === 0) return null
 
+  // Filter out images from projects we've already scheduled in this batch
+  const availableMedia = media.filter(m =>
+    !m.source_project_id || !excludeProjectIds.includes(m.source_project_id)
+  )
+
+  if (availableMedia.length === 0) return null
+
   // If only 1 image, check 14-day cooldown
-  if (media.length === 1 && media[0].last_posted_at) {
-    const daysSinceLastPost = (Date.now() - new Date(media[0].last_posted_at).getTime()) / (24 * 60 * 60 * 1000)
+  if (availableMedia.length === 1 && availableMedia[0].last_posted_at) {
+    const daysSinceLastPost = (Date.now() - new Date(availableMedia[0].last_posted_at).getTime()) / (24 * 60 * 60 * 1000)
     if (daysSinceLastPost < 14) {
       // Skip - wait for cooldown period
       return null
@@ -81,33 +89,37 @@ async function getNextImage(companyId: string): Promise<MediaItem | null> {
   }
 
   // Pick from least-posted images (those with the same minimum times_posted)
-  const minPosted = media[0].times_posted
-  const candidates = media.filter(m => m.times_posted === minPosted)
+  const minPosted = availableMedia[0].times_posted
+  const candidates = availableMedia.filter(m => m.times_posted === minPosted)
   const selected = candidates[Math.floor(Math.random() * candidates.length)]
 
   return selected as MediaItem
 }
 
-// Update media item after scheduling
-async function updateMediaAfterScheduling(mediaId: string): Promise<void> {
+// Update all media items from a project after scheduling
+async function updateMediaAfterScheduling(projectId: string | null): Promise<void> {
   const supabase = createAdminClient()
 
-  // Get current times_posted
-  const { data: media } = await supabase
-    .from('media_library')
-    .select('times_posted')
-    .eq('id', mediaId)
-    .single()
+  if (!projectId) return
 
-  if (media) {
+  // Get all media items from this project
+  const { data: mediaItems } = await supabase
+    .from('media_library')
+    .select('id, times_posted')
+    .eq('source_project_id', projectId)
+
+  if (!mediaItems) return
+
+  // Update each one
+  for (const item of mediaItems) {
     await supabase
       .from('media_library')
       .update({
-        times_posted: (media.times_posted || 0) + 1,
+        times_posted: (item.times_posted || 0) + 1,
         last_posted_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
-      .eq('id', mediaId)
+      .eq('id', item.id)
   }
 }
 
@@ -180,9 +192,10 @@ async function shouldPostReview(companyId: string): Promise<boolean> {
 }
 
 // Schedule a new post for a company
-export async function schedulePost(company: Company): Promise<{
+export async function schedulePost(company: Company, excludeProjectIds: string[] = []): Promise<{
   success: boolean
   postId?: string
+  projectId?: string | null
   error?: string
 }> {
   const supabase = createAdminClient()
@@ -252,7 +265,7 @@ export async function schedulePost(company: Company): Promise<{
     }
 
     // Post an image (default or fallback)
-    const media = await getNextImage(company.id)
+    const media = await getNextImage(company.id, excludeProjectIds)
     if (!media) {
       return { success: false, error: 'No images available for posting' }
     }
@@ -287,8 +300,8 @@ export async function schedulePost(company: Company): Promise<{
       return { success: false, error: 'Failed to schedule post' }
     }
 
-    await updateMediaAfterScheduling(media.id)
-    return { success: true, postId: post.id }
+    await updateMediaAfterScheduling(media.source_project_id)
+    return { success: true, postId: post.id, projectId: media.source_project_id }
   } catch (error) {
     console.error('Schedule post error:', error)
     return { success: false, error: 'Scheduling failed' }
@@ -314,10 +327,16 @@ export async function fillPostQueue(
   const postsNeeded = Math.max(0, targetCount - currentCount)
 
   let scheduled = 0
+  const scheduledProjectIds: string[] = []
+
   for (let i = 0; i < postsNeeded; i++) {
-    const result = await schedulePost(company)
+    const result = await schedulePost(company, scheduledProjectIds)
     if (result.success) {
       scheduled++
+      // Track this project so we don't schedule it again in this batch
+      if (result.projectId) {
+        scheduledProjectIds.push(result.projectId)
+      }
     } else {
       // Stop if we can't schedule more (e.g., no images)
       break
