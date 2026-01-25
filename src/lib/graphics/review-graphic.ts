@@ -65,7 +65,7 @@ async function getRandomProjectImage(companyId: string): Promise<string | null> 
 
   const { data: media, error } = await supabase
     .from('media_library')
-    .select('media_url')
+    .select('image_url')
     .eq('company_id', companyId)
     .eq('is_available', true)
     .limit(50)
@@ -83,7 +83,7 @@ async function getRandomProjectImage(companyId: string): Promise<string | null> 
 
   // Pick random image
   const randomIndex = Math.floor(Math.random() * media.length)
-  const selectedUrl = media[randomIndex].media_url
+  const selectedUrl = media[randomIndex].image_url
   console.log('[Review Graphic] Selected random image:', selectedUrl)
   return selectedUrl
 }
