@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
+import Link from 'next/link'
 import { Calendar, Check, X, AlertCircle, Edit2, Trash2, ChevronUp, ChevronDown, Layers } from 'lucide-react'
 import MediaPreview from './MediaPreview'
 
@@ -164,14 +165,14 @@ export default function PostsList({ initialPosts }: PostsListProps) {
           className="bg-white rounded-xl border border-gray-200 p-4"
         >
           <div className="flex gap-4">
-            {/* Media (Image or Video) */}
-            <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative">
+            {/* Media (Image or Video) - Clickable */}
+            <Link href={`/admin/posts/${post.id}`} className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative hover:ring-2 hover:ring-orange-500 transition-all">
               <MediaPreview
                 mediaUrl={post.image_url}
                 mediaType={post.media_type || 'image'}
                 alt="Post preview"
               />
-            </div>
+            </Link>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
@@ -279,7 +280,7 @@ export default function PostsList({ initialPosts }: PostsListProps) {
                   </div>
                 </div>
               ) : (
-                <>
+                <Link href={`/admin/posts/${post.id}`} className="block hover:bg-gray-50 rounded p-2 -m-2 transition-colors">
                   <p className="text-sm text-gray-700 line-clamp-2">
                     {post.caption}
                   </p>
@@ -288,7 +289,7 @@ export default function PostsList({ initialPosts }: PostsListProps) {
                       {post.hashtags.map(h => `#${h}`).join(' ')}
                     </p>
                   )}
-                </>
+                </Link>
               )}
 
               {/* Error message */}
