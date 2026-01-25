@@ -39,7 +39,10 @@ const SIZE = 1080
 // =============================================================================
 
 function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
-  const words = text.split(' ')
+  // First, normalize the text by replacing all newlines/paragraph breaks with spaces
+  const normalizedText = text.replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim()
+
+  const words = normalizedText.split(' ')
   const lines: string[] = []
   let line = ''
 
