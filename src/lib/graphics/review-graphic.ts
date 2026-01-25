@@ -63,18 +63,29 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
 async function getRandomProjectImage(companyId: string): Promise<string | null> {
   const supabase = createAdminClient()
 
-  const { data: media } = await supabase
+  const { data: media, error } = await supabase
     .from('media_library')
     .select('media_url')
     .eq('company_id', companyId)
     .eq('is_available', true)
     .limit(50)
 
-  if (!media || media.length === 0) return null
+  console.log('[Review Graphic] Media library query result:', {
+    companyId,
+    mediaCount: media?.length || 0,
+    error: error?.message
+  })
+
+  if (!media || media.length === 0) {
+    console.log('[Review Graphic] No media found in library')
+    return null
+  }
 
   // Pick random image
   const randomIndex = Math.floor(Math.random() * media.length)
-  return media[randomIndex].media_url
+  const selectedUrl = media[randomIndex].media_url
+  console.log('[Review Graphic] Selected random image:', selectedUrl)
+  return selectedUrl
 }
 
 // =============================================================================
@@ -99,9 +110,13 @@ export async function generateReviewGraphic(
   // Try to load a background image from media library
   const backgroundImageUrl = await getRandomProjectImage(company.id)
 
+  console.log('[Review Graphic] Background image URL:', backgroundImageUrl)
+
   if (backgroundImageUrl) {
     try {
+      console.log('[Review Graphic] Loading background image from:', backgroundImageUrl)
       const bgImage = await loadImage(backgroundImageUrl)
+      console.log('[Review Graphic] Image loaded successfully, dimensions:', bgImage.width, 'x', bgImage.height)
 
       // Draw background image (cover fit)
       const scale = Math.max(SIZE / bgImage.width, SIZE / bgImage.height)
@@ -111,15 +126,20 @@ export async function generateReviewGraphic(
       ctx.drawImage(bgImage, x, y, bgImage.width * scale, bgImage.height * scale)
 
       // Dark overlay
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'
       ctx.fillRect(0, 0, SIZE, SIZE)
     } catch (err) {
-      console.error('[Review Graphic] Failed to load background image:', err)
+      console.error('[Review Graphic] Failed to load background image:', {
+        error: err,
+        message: err instanceof Error ? err.message : 'Unknown error',
+        url: backgroundImageUrl
+      })
       // Fallback to solid color
       ctx.fillStyle = company.primary_color || '#1e3a5f'
       ctx.fillRect(0, 0, SIZE, SIZE)
     }
   } else {
+    console.log('[Review Graphic] No background image available, using solid color')
     // No images available, use solid color
     ctx.fillStyle = company.primary_color || '#1e3a5f'
     ctx.fillRect(0, 0, SIZE, SIZE)
