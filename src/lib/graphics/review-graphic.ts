@@ -146,11 +146,11 @@ export async function generateReviewGraphic(
   }
 
   // White card in center
-  const cardWidth = 700
-  const cardHeight = 450
+  const cardWidth = 750
+  const cardHeight = 550
   const cardX = (SIZE - cardWidth) / 2
   const cardY = (SIZE - cardHeight) / 2
-  const cardRadius = 24
+  const cardRadius = 28
 
   // Card shadow
   ctx.save()
@@ -168,19 +168,11 @@ export async function generateReviewGraphic(
   const reviewerName = review.reviewer_name || 'Happy Customer'
   const reviewText = review.review_text || 'Great service!'
 
-  let textY = cardY + 80
+  let textY = cardY + 90
 
-  // Reviewer name
-  ctx.fillStyle = '#1a1a1a'
-  ctx.font = `700 32px ${FONT}`
-  ctx.textAlign = 'center'
-  ctx.fillText(reviewerName, SIZE / 2, textY)
-
-  textY += 50
-
-  // Stars
-  const starSize = 24
-  const starGap = 8
+  // Stars at top
+  const starSize = 32
+  const starGap = 12
   const starsWidth = starSize * 5 + starGap * 4
   const starsX = (SIZE - starsWidth) / 2
 
@@ -211,37 +203,44 @@ export async function generateReviewGraphic(
   }
   ctx.restore()
 
-  textY += starSize + 50
+  textY += starSize + 60
 
   // Review text
-  const maxTextWidth = cardWidth - 100
+  const maxTextWidth = cardWidth - 120
   const textLength = reviewText.length
 
-  let fontSize = 22
-  if (textLength > 150) fontSize = 18
-  else if (textLength > 100) fontSize = 20
+  let fontSize = 28
+  if (textLength > 200) fontSize = 22
+  else if (textLength > 150) fontSize = 24
+  else if (textLength > 100) fontSize = 26
 
   ctx.font = `400 ${fontSize}px ${FONT}`
   const lines = wrapText(ctx, reviewText, maxTextWidth)
 
   // Limit lines
-  let displayLines = lines.slice(0, 4)
-  if (lines.length > 4) {
-    let lastLine = displayLines[3]
-    if (lastLine.length > 50) lastLine = lastLine.slice(0, 50)
-    displayLines[3] = lastLine + '...'
+  let displayLines = lines.slice(0, 5)
+  if (lines.length > 5) {
+    let lastLine = displayLines[4]
+    if (lastLine.length > 40) lastLine = lastLine.slice(0, 40)
+    displayLines[4] = lastLine + '...'
   }
 
-  ctx.fillStyle = '#4a5568'
+  ctx.fillStyle = '#374151'
   ctx.font = `400 ${fontSize}px ${FONT}`
   ctx.textAlign = 'center'
 
-  const lineHeight = fontSize * 1.7
+  const lineHeight = fontSize * 1.6
 
   for (const line of displayLines) {
     ctx.fillText(line, SIZE / 2, textY)
     textY += lineHeight
   }
+
+  // Reviewer name at bottom
+  ctx.fillStyle = '#6b7280'
+  ctx.font = `600 26px ${FONT}`
+  ctx.textAlign = 'center'
+  ctx.fillText(`— ${reviewerName}`, SIZE / 2, cardY + cardHeight - 60)
 
   console.log('[Review Graphic] Canvas created, uploading')
 
