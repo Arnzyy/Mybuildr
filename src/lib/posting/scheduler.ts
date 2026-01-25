@@ -57,7 +57,7 @@ function getNextPostingSlot(
 
 // Get next available image from media library using rotation logic
 // Returns a single media item, but if it's part of a multi-image project, we'll post the whole project as carousel
-async function getNextImage(companyId: string, excludeProjectIds: string[] = []): Promise<MediaItem | null> {
+async function getNextImage(companyId: string, excludeProjectIds: string[] = [], excludeMediaIds: string[] = []): Promise<MediaItem | null> {
   const supabase = createAdminClient()
 
   // Get available media items, ordered by times_posted (ascending) and last_posted_at (ascending, nulls first)
@@ -72,10 +72,16 @@ async function getNextImage(companyId: string, excludeProjectIds: string[] = [])
 
   if (!media || media.length === 0) return null
 
-  // Filter out images from projects we've already scheduled in this batch
-  const availableMedia = media.filter(m =>
-    !m.source_project_id || !excludeProjectIds.includes(m.source_project_id)
-  )
+  // Filter out images/projects we've already scheduled in this batch
+  const availableMedia = media.filter(m => {
+    // Exclude if this specific media item was already scheduled
+    if (excludeMediaIds.includes(m.id)) return false
+
+    // Exclude if this media's project was already scheduled
+    if (m.source_project_id && excludeProjectIds.includes(m.source_project_id)) return false
+
+    return true
+  })
 
   if (availableMedia.length === 0) return null
 
@@ -192,10 +198,11 @@ async function shouldPostReview(companyId: string, frequency: number = 3): Promi
 }
 
 // Schedule a new post for a company
-export async function schedulePost(company: Company, excludeProjectIds: string[] = []): Promise<{
+export async function schedulePost(company: Company, excludeProjectIds: string[] = [], excludeMediaIds: string[] = []): Promise<{
   success: boolean
   postId?: string
   projectId?: string | null
+  mediaId?: string
   error?: string
 }> {
   const supabase = createAdminClient()
@@ -265,7 +272,7 @@ export async function schedulePost(company: Company, excludeProjectIds: string[]
     }
 
     // Post an image (default or fallback)
-    const media = await getNextImage(company.id, excludeProjectIds)
+    const media = await getNextImage(company.id, excludeProjectIds, excludeMediaIds)
     if (!media) {
       return { success: false, error: 'No images available for posting' }
     }
@@ -301,7 +308,7 @@ export async function schedulePost(company: Company, excludeProjectIds: string[]
     }
 
     await updateMediaAfterScheduling(media.source_project_id)
-    return { success: true, postId: post.id, projectId: media.source_project_id }
+    return { success: true, postId: post.id, projectId: media.source_project_id, mediaId: media.id }
   } catch (error) {
     console.error('Schedule post error:', error)
     return { success: false, error: 'Scheduling failed' }
@@ -328,14 +335,18 @@ export async function fillPostQueue(
 
   let scheduled = 0
   const scheduledProjectIds: string[] = []
+  const scheduledMediaIds: string[] = []
 
   for (let i = 0; i < postsNeeded; i++) {
-    const result = await schedulePost(company, scheduledProjectIds)
+    const result = await schedulePost(company, scheduledProjectIds, scheduledMediaIds)
     if (result.success) {
       scheduled++
-      // Track this project so we don't schedule it again in this batch
+      // Track this project/media so we don't schedule it again in this batch
       if (result.projectId) {
         scheduledProjectIds.push(result.projectId)
+      }
+      if (result.mediaId) {
+        scheduledMediaIds.push(result.mediaId)
       }
     } else {
       // Stop if we can't schedule more (e.g., no images)
