@@ -55,19 +55,19 @@ function getNextPostingSlot(
   return fallback
 }
 
-// Get next available image from media library using rotation logic
+// Get next available image from media library - only unposted images
 // Returns a single media item, but if it's part of a multi-image project, we'll post the whole project as carousel
 async function getNextImage(companyId: string, excludeProjectIds: string[] = [], excludeMediaIds: string[] = []): Promise<MediaItem | null> {
   const supabase = createAdminClient()
 
-  // Get available media items, ordered by times_posted (ascending) and last_posted_at (ascending, nulls first)
+  // Get ONLY UNPOSTED media items (times_posted = 0 or NULL)
   const { data: media } = await supabase
     .from('media_library')
     .select('*')
     .eq('company_id', companyId)
     .eq('is_available', true)
-    .order('times_posted', { ascending: true })
-    .order('last_posted_at', { ascending: true, nullsFirst: true })
+    .or('times_posted.eq.0,times_posted.is.null')  // Only get images that have never been posted
+    .order('created_at', { ascending: true })  // Oldest first (FIFO)
     .limit(50)
 
   if (!media || media.length === 0) return null
@@ -85,19 +85,8 @@ async function getNextImage(companyId: string, excludeProjectIds: string[] = [],
 
   if (availableMedia.length === 0) return null
 
-  // If only 1 image, check 14-day cooldown
-  if (availableMedia.length === 1 && availableMedia[0].last_posted_at) {
-    const daysSinceLastPost = (Date.now() - new Date(availableMedia[0].last_posted_at).getTime()) / (24 * 60 * 60 * 1000)
-    if (daysSinceLastPost < 14) {
-      // Skip - wait for cooldown period
-      return null
-    }
-  }
-
-  // Pick from least-posted images (those with the same minimum times_posted)
-  const minPosted = availableMedia[0].times_posted
-  const candidates = availableMedia.filter(m => m.times_posted === minPosted)
-  const selected = candidates[Math.floor(Math.random() * candidates.length)]
+  // Pick randomly from unposted images
+  const selected = availableMedia[Math.floor(Math.random() * availableMedia.length)]
 
   return selected as MediaItem
 }
