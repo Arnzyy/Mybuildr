@@ -4,6 +4,7 @@ import { getCompanyForUser } from '@/lib/supabase/queries'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateReviewGraphic } from '@/lib/graphics/review-graphic'
 import { hasFeature } from '@/lib/features'
+import { autoSchedulePosts } from '@/lib/posting/auto-schedule'
 import type { Company, Review } from '@/lib/supabase/types'
 
 export async function POST(
@@ -69,6 +70,9 @@ export async function POST(
       .from('reviews')
       .update({ graphic_url: graphicUrl })
       .eq('id', id)
+
+    // Auto-schedule posts when new review graphic is generated
+    await autoSchedulePosts(company)
 
     return NextResponse.json({
       success: true,

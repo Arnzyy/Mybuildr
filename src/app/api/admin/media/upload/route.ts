@@ -4,6 +4,7 @@ import { getCompanyForUser } from '@/lib/supabase/queries'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { uploadToR2, createUploadParams } from '@/lib/r2/client'
 import { hasFeature } from '@/lib/features'
+import { autoSchedulePosts } from '@/lib/posting/auto-schedule'
 
 export async function POST(request: NextRequest) {
   try {
@@ -71,6 +72,9 @@ export async function POST(request: NextRequest) {
       console.error('Failed to create media entry:', error)
       return NextResponse.json({ error: 'Failed to save media' }, { status: 500 })
     }
+
+    // Auto-schedule posts when new media is uploaded
+    await autoSchedulePosts(company)
 
     return NextResponse.json({ media, url: imageUrl })
   } catch (error) {

@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getCompanyForUser } from '@/lib/supabase/queries'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { hasFeature } from '@/lib/features'
-import { fillPostQueue } from '@/lib/posting/scheduler'
+import { autoSchedulePosts } from '@/lib/posting/auto-schedule'
 
 // GET all projects
 export async function GET() {
@@ -97,15 +97,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create project' }, { status: 500 })
     }
 
-    // Auto-schedule posts if company has social features and images were uploaded
-    if (images && images.length > 0 && hasFeature(company.tier, 'social_connections')) {
-      try {
-        // Fill up the post queue (schedules posts for the next week)
-        await fillPostQueue(company, company.posts_per_week || 7)
-      } catch (scheduleError) {
-        console.error('Failed to auto-schedule posts:', scheduleError)
-        // Don't fail the request - project was created successfully
-      }
+    // Auto-schedule posts when new project with images is created
+    if (images && images.length > 0) {
+      await autoSchedulePosts(company)
     }
 
     return NextResponse.json({ project })

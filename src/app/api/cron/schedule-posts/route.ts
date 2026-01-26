@@ -28,7 +28,8 @@ export async function GET(request: NextRequest) {
     const results: { companyId: string; scheduled: number }[] = []
 
     for (const company of companies as Company[]) {
-      const scheduled = await fillPostQueue(company)
+      // Fill 14 days of posts to maintain a healthy buffer
+      const scheduled = await fillPostQueue(company, 14)
       results.push({ companyId: company.id, scheduled })
     }
 
