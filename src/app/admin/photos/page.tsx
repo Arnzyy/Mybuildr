@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { hasFeature } from '@/lib/features'
 import Link from 'next/link'
 import MediaLibraryView from '@/components/admin/MediaLibraryView'
+import QuickImageUpload from '@/components/admin/QuickImageUpload'
 import { Lock, Image as ImageIcon, FolderOpen } from 'lucide-react'
 
 export default async function PhotosPage() {
@@ -67,6 +68,7 @@ export default async function PhotosPage() {
 
         {hasContent && (
           <div className="flex items-center gap-3">
+            <QuickImageUpload />
             <Link
               href="/admin/projects/new"
               className="inline-flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-orange-600 transition-colors"

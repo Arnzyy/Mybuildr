@@ -67,32 +67,39 @@ export async function generateCaption(
     ? `\nAlways include these hashtags: ${company.hashtag_preferences.join(', ')}`
     : ''
 
-  // Context hints section - only include if we have data
-  const hintsSection = []
-  if (contextHints.title) hintsSection.push(`- Title hint: ${contextHints.title}`)
-  if (contextHints.description) hintsSection.push(`- Description hint: ${contextHints.description}`)
-  if (contextHints.location) hintsSection.push(`- Location hint: ${contextHints.location}`)
-  if (contextHints.workType) hintsSection.push(`- Work type hint: ${contextHints.workType}`)
+  // Build context section with DESCRIPTION as the main story
+  const contextSection = []
+
+  // Description is THE KEY CONTEXT - this is what the post is about
+  if (contextHints.description) {
+    contextSection.push(`**MAIN CONTEXT (what this post is about):**\n${contextHints.description}`)
+  }
+
+  // Other metadata as supporting info
+  if (contextHints.title) contextSection.push(`- Title: ${contextHints.title}`)
+  if (contextHints.location) contextSection.push(`- Location: ${contextHints.location}`)
+  if (contextHints.workType) contextSection.push(`- Work type: ${contextHints.workType}`)
 
   const prompt = `You are a social media manager for a ${company.trade_type || 'construction'} company called "${company.name}" based in ${company.city || 'the UK'}.
 
-Analyze this image and write a caption for it.
+You have been given an image and context about what this post should communicate.
 
-${hintsSection.length > 0 ? `Context hints (use only if they match what you see in the image):\n${hintsSection.join('\n')}\n` : ''}
+${contextSection.length > 0 ? `${contextSection.join('\n')}\n` : ''}
+
+Your task: Write a caption that tells the story from the context above while referring to what you see in the image.
 
 CRITICAL RULES - YOU MUST FOLLOW THESE:
-1. ONLY describe what you can actually SEE in the image - never make up details
-2. If you cannot clearly identify something, be vague rather than specific
-3. NEVER invent specifics like "custom oak cabinets" unless you can clearly see oak wood
-4. NEVER claim specific materials, brands, or techniques unless clearly visible
-5. Use general terms like "quality finish", "professional work", "great result" rather than inventing details
-6. If the image is unclear, focus on the general impression rather than specifics
+1. USE the description/context as the story - that's what this post is about
+2. Describe what you see in the image to support the story
+3. If there's a description about challenges, issues, or problems - USE IT. That's the story.
+4. Example: If description says "truck broke down" and you see a truck, write about the breakdown
+5. Example: If description says "before photos" and you see messy work, acknowledge it's the before state
+6. Be honest about challenges - tradespeople deal with problems, that's real and relatable
 7. Keep it SHORT - max 2-3 sentences
 8. Sound like a real tradesperson, not a marketing agency
-9. Be proud of the work but not boastful
-10. Include a subtle call to action (contact us, get in touch, etc.)
-11. Don't use emojis excessively (1-2 max)
-12. Sound authentic, not salesy${customGuidelines}
+9. Include a subtle call to action (contact us, get in touch, etc.)
+10. Don't use emojis excessively (1-2 max)
+11. Sound authentic, not salesy - real tradespeople talk about problems too${customGuidelines}
 
 Also provide 5-8 relevant hashtags for the UK construction/trades market based on what you see.${customHashtagsInstruction}
 
