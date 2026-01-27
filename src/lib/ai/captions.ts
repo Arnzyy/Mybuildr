@@ -147,15 +147,15 @@ Only respond with the JSON, nothing else.`
     // Get the appropriate sign-off for this platform (only if enabled)
     let signoff = ''
     if (company.caption_signoff_enabled !== false) {
-      // Check for custom sign-off first
-      if (platform === 'instagram' && company.caption_signoff_instagram) {
-        signoff = company.caption_signoff_instagram
-      } else if (platform === 'facebook' && company.caption_signoff_facebook) {
-        signoff = company.caption_signoff_facebook
-      } else if (platform === 'google' && company.caption_signoff_google) {
-        signoff = company.caption_signoff_google
+      // Check for custom sign-off first (must be non-empty string)
+      if (platform === 'instagram' && company.caption_signoff_instagram?.trim()) {
+        signoff = company.caption_signoff_instagram.trim()
+      } else if (platform === 'facebook' && company.caption_signoff_facebook?.trim()) {
+        signoff = company.caption_signoff_facebook.trim()
+      } else if (platform === 'google' && company.caption_signoff_google?.trim()) {
+        signoff = company.caption_signoff_google.trim()
       } else {
-        // No custom sign-off, generate default from company data
+        // No custom sign-off (or empty), generate default from company data
         signoff = generateDefaultSignoff(company, platform)
       }
     }
@@ -181,12 +181,12 @@ Only respond with the JSON, nothing else.`
     // Get sign-off for fallback (only if enabled)
     let signoff = ''
     if (company.caption_signoff_enabled !== false) {
-      if (platform === 'instagram' && company.caption_signoff_instagram) {
-        signoff = company.caption_signoff_instagram
-      } else if (platform === 'facebook' && company.caption_signoff_facebook) {
-        signoff = company.caption_signoff_facebook
-      } else if (platform === 'google' && company.caption_signoff_google) {
-        signoff = company.caption_signoff_google
+      if (platform === 'instagram' && company.caption_signoff_instagram?.trim()) {
+        signoff = company.caption_signoff_instagram.trim()
+      } else if (platform === 'facebook' && company.caption_signoff_facebook?.trim()) {
+        signoff = company.caption_signoff_facebook.trim()
+      } else if (platform === 'google' && company.caption_signoff_google?.trim()) {
+        signoff = company.caption_signoff_google.trim()
       } else {
         signoff = generateDefaultSignoff(company, platform)
       }
@@ -292,12 +292,12 @@ Only respond with the JSON, nothing else.`
     // Get sign-off (same logic as regular captions)
     let signoff = ''
     if (company.caption_signoff_enabled !== false) {
-      if (platform === 'instagram' && company.caption_signoff_instagram) {
-        signoff = company.caption_signoff_instagram
-      } else if (platform === 'facebook' && company.caption_signoff_facebook) {
-        signoff = company.caption_signoff_facebook
-      } else if (platform === 'google' && company.caption_signoff_google) {
-        signoff = company.caption_signoff_google
+      if (platform === 'instagram' && company.caption_signoff_instagram?.trim()) {
+        signoff = company.caption_signoff_instagram.trim()
+      } else if (platform === 'facebook' && company.caption_signoff_facebook?.trim()) {
+        signoff = company.caption_signoff_facebook.trim()
+      } else if (platform === 'google' && company.caption_signoff_google?.trim()) {
+        signoff = company.caption_signoff_google.trim()
       } else {
         signoff = generateDefaultSignoff(company, platform)
       }
