@@ -45,10 +45,22 @@ export async function DELETE(
       return NextResponse.json({ error: 'Can only delete pending or failed posts' }, { status: 400 })
     }
 
-    // Update to skipped status
+    // If this post has a media_id, mark it as posted so it never gets scheduled again
+    if (post.media_id) {
+      await admin
+        .from('media_library')
+        .update({
+          times_posted: 999, // Mark as "deleted" - will never be selected again
+          last_posted_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', post.media_id)
+    }
+
+    // Delete the scheduled post entirely
     await admin
       .from('scheduled_posts')
-      .update({ status: 'skipped' })
+      .delete()
       .eq('id', id)
 
     return NextResponse.json({ success: true })

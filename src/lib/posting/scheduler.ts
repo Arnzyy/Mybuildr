@@ -296,7 +296,16 @@ export async function schedulePost(company: Company, excludeProjectIds: string[]
       return { success: false, error: 'Failed to schedule post' }
     }
 
-    await updateMediaAfterScheduling(media.source_project_id)
+    // Mark this specific media item as scheduled (increment times_posted)
+    await supabase
+      .from('media_library')
+      .update({
+        times_posted: (media.times_posted || 0) + 1,
+        last_posted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', media.id)
+
     return { success: true, postId: post.id, projectId: media.source_project_id, mediaId: media.id }
   } catch (error) {
     console.error('Schedule post error:', error)
