@@ -9,7 +9,7 @@ interface ScrapedReview {
 
 export async function scrapeCheckatradeReviews(
   checkatradeUrl: string,
-  limit: number = 10
+  limit: number = 50
 ): Promise<ScrapedReview[]> {
   try {
     // Validate URL
@@ -17,15 +17,34 @@ export async function scrapeCheckatradeReviews(
       throw new Error('Invalid Checkatrade URL')
     }
 
-    // Fetch the page
-    const response = await fetch(checkatradeUrl, {
+    // Ensure URL ends with /reviews
+    let reviewsUrl = checkatradeUrl.replace(/\/+$/, '')
+    if (!reviewsUrl.endsWith('/reviews')) {
+      reviewsUrl += '/reviews'
+    }
+
+    // Fetch with full browser-like headers to avoid 403
+    const response = await fetch(reviewsUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        'Sec-Ch-Ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+        'Sec-Ch-Ua-Mobile': '?0',
+        'Sec-Ch-Ua-Platform': '"Windows"',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Upgrade-Insecure-Requests': '1',
       },
     })
 
     if (!response.ok) {
-      throw new Error('Failed to fetch Checkatrade page')
+      throw new Error(`Failed to fetch Checkatrade page (${response.status})`)
     }
 
     const html = await response.text()
@@ -33,60 +52,222 @@ export async function scrapeCheckatradeReviews(
 
     const reviews: ScrapedReview[] = []
 
-    // Checkatrade review structure (may need updating if they change their HTML)
-    $('.review-card, [data-testid="review-card"], .ch-review').each((_, element) => {
-      if (reviews.length >= limit) return false
+    // Try to extract from __NEXT_DATA__ first (Next.js server-rendered data)
+    const nextDataScript = $('script#__NEXT_DATA__').html()
+    if (nextDataScript) {
+      try {
+        const nextData = JSON.parse(nextDataScript)
+        const pageProps = nextData?.props?.pageProps
 
-      const $el = $(element)
-
-      // Extract reviewer name
-      const name = $el.find('.reviewer-name, [data-testid="reviewer-name"], .ch-review__author').text().trim()
-        || $el.find('strong').first().text().trim()
-        || 'Anonymous'
-
-      // Extract rating (look for stars or numeric rating)
-      let rating = 5
-      const ratingText = $el.find('.rating, [data-testid="rating"], .ch-review__rating').text()
-      const ratingMatch = ratingText.match(/(\d+(?:\.\d+)?)/)?.[1]
-      if (ratingMatch) {
-        rating = Math.round(parseFloat(ratingMatch))
+        // Look for reviews in the page props (traverse the object)
+        const reviewsData = findReviews(pageProps)
+        if (reviewsData && reviewsData.length > 0) {
+          for (const r of reviewsData.slice(0, limit)) {
+            const review = extractReviewFromJson(r)
+            if (review) reviews.push(review)
+          }
+          if (reviews.length > 0) return reviews
+        }
+      } catch {
+        // Fall through to HTML parsing
       }
-      // Also check star count
-      const stars = $el.find('.star-filled, .ch-star--filled, [data-filled="true"]').length
-      if (stars > 0) {
-        rating = stars
+    }
+
+    // Fallback: parse HTML directly
+    // Try multiple possible selectors for Checkatrade's review elements
+    const selectors = [
+      '[data-testid="review-card"]',
+      '.review-card',
+      '.ch-review',
+      '[class*="ReviewCard"]',
+      '[class*="review-card"]',
+      '[class*="Review_card"]',
+      'article[class*="review"]',
+    ]
+
+    let reviewElements: ReturnType<cheerio.CheerioAPI> | null = null
+    for (const selector of selectors) {
+      const found = $(selector)
+      if (found.length > 0) {
+        reviewElements = found
+        break
       }
+    }
 
-      // Extract review text
-      const text = $el.find('.review-text, [data-testid="review-text"], .ch-review__text, p').text().trim()
+    if (reviewElements) {
+      reviewElements.each((_, element) => {
+        if (reviews.length >= limit) return false
 
-      // Extract date
-      const dateText = $el.find('.review-date, [data-testid="review-date"], .ch-review__date, time').text().trim()
-      let date = new Date().toISOString().split('T')[0]
-      if (dateText) {
+        const $el = $(element)
+        const review = extractReviewFromHtml($, $el)
+        if (review) reviews.push(review)
+      })
+    }
+
+    // If still no reviews, try finding any structured review-like content
+    if (reviews.length === 0) {
+      // Look for JSON-LD structured data
+      $('script[type="application/ld+json"]').each((_, el) => {
         try {
-          const parsed = new Date(dateText)
-          if (!isNaN(parsed.getTime())) {
-            date = parsed.toISOString().split('T')[0]
+          const jsonLd = JSON.parse($(el).html() || '')
+          if (jsonLd['@type'] === 'LocalBusiness' || jsonLd['@type'] === 'Organization') {
+            const jsonReviews = jsonLd.review || jsonLd.reviews || []
+            for (const r of (Array.isArray(jsonReviews) ? jsonReviews : [jsonReviews]).slice(0, limit)) {
+              if (r.reviewBody || r.description) {
+                reviews.push({
+                  reviewer_name: r.author?.name || r.author || 'Customer',
+                  rating: Math.min(5, Math.max(1, Math.round(
+                    r.reviewRating?.ratingValue || r.rating || 5
+                  ))),
+                  review_text: (r.reviewBody || r.description || '').substring(0, 1000),
+                  review_date: r.datePublished || new Date().toISOString().split('T')[0],
+                })
+              }
+            }
           }
         } catch {
-          // Keep default date
+          // Skip invalid JSON-LD
         }
-      }
-
-      if (text && text.length > 10) {
-        reviews.push({
-          reviewer_name: name.substring(0, 100),
-          rating: Math.min(5, Math.max(1, rating)),
-          review_text: text.substring(0, 1000),
-          review_date: date,
-        })
-      }
-    })
+      })
+    }
 
     return reviews
   } catch (error) {
     console.error('Checkatrade scraping error:', error)
     throw error
+  }
+}
+
+// Recursively search an object for an array that looks like reviews
+function findReviews(obj: unknown): unknown[] | null {
+  if (!obj || typeof obj !== 'object') return null
+
+  if (Array.isArray(obj)) {
+    // Check if this array contains review-like objects
+    if (obj.length > 0 && typeof obj[0] === 'object' && obj[0] !== null) {
+      const first = obj[0] as Record<string, unknown>
+      if (
+        'reviewText' in first || 'review_text' in first || 'text' in first ||
+        'description' in first || 'body' in first || 'content' in first
+      ) {
+        return obj
+      }
+    }
+    return null
+  }
+
+  for (const key of Object.keys(obj as Record<string, unknown>)) {
+    if (key.toLowerCase().includes('review')) {
+      const val = (obj as Record<string, unknown>)[key]
+      if (Array.isArray(val) && val.length > 0) {
+        return val
+      }
+    }
+  }
+
+  // Recurse into nested objects
+  for (const val of Object.values(obj as Record<string, unknown>)) {
+    const found = findReviews(val)
+    if (found) return found
+  }
+
+  return null
+}
+
+// Extract review data from a JSON object (from __NEXT_DATA__)
+function extractReviewFromJson(r: unknown): ScrapedReview | null {
+  if (!r || typeof r !== 'object') return null
+  const obj = r as Record<string, unknown>
+
+  const text = String(
+    obj.reviewText || obj.review_text || obj.text ||
+    obj.description || obj.body || obj.content || ''
+  ).trim()
+
+  if (!text || text.length < 10) return null
+
+  const name = String(
+    obj.reviewerName || obj.reviewer_name || obj.customerName ||
+    obj.customer_name || obj.author || obj.name || 'Customer'
+  ).trim()
+
+  let rating = 5
+  const ratingVal = obj.rating || obj.score || obj.overallRating || obj.overall_rating
+  if (typeof ratingVal === 'number') {
+    // Checkatrade uses /10 rating, convert to /5
+    rating = ratingVal > 5 ? Math.round(ratingVal / 2) : Math.round(ratingVal)
+  }
+
+  let date = new Date().toISOString().split('T')[0]
+  const dateVal = obj.date || obj.review_date || obj.reviewDate || obj.createdAt || obj.created_at
+  if (dateVal) {
+    try {
+      const parsed = new Date(String(dateVal))
+      if (!isNaN(parsed.getTime())) {
+        date = parsed.toISOString().split('T')[0]
+      }
+    } catch {
+      // Keep default
+    }
+  }
+
+  return {
+    reviewer_name: name.substring(0, 100),
+    rating: Math.min(5, Math.max(1, rating)),
+    review_text: text.substring(0, 1000),
+    review_date: date,
+  }
+}
+
+// Extract review data from an HTML element
+function extractReviewFromHtml(
+  $: cheerio.CheerioAPI,
+  $el: ReturnType<cheerio.CheerioAPI>
+): ScrapedReview | null {
+  // Name
+  const name = $el.find(
+    '.reviewer-name, [data-testid="reviewer-name"], [class*="author"], [class*="name"], strong'
+  ).first().text().trim() || 'Customer'
+
+  // Rating
+  let rating = 5
+  const ratingText = $el.find(
+    '.rating, [data-testid="rating"], [class*="rating"], [class*="score"]'
+  ).first().text()
+  const ratingMatch = ratingText.match(/(\d+(?:\.\d+)?)/)?.[1]
+  if (ratingMatch) {
+    const val = parseFloat(ratingMatch)
+    // Checkatrade uses /10, convert to /5
+    rating = val > 5 ? Math.round(val / 2) : Math.round(val)
+  }
+
+  // Text
+  const text = $el.find(
+    '.review-text, [data-testid="review-text"], [class*="review-text"], [class*="ReviewText"], p'
+  ).first().text().trim()
+
+  if (!text || text.length < 10) return null
+
+  // Date
+  let date = new Date().toISOString().split('T')[0]
+  const dateText = $el.find(
+    '.review-date, [data-testid="review-date"], time, [class*="date"]'
+  ).first().text().trim()
+  if (dateText) {
+    try {
+      const parsed = new Date(dateText)
+      if (!isNaN(parsed.getTime())) {
+        date = parsed.toISOString().split('T')[0]
+      }
+    } catch {
+      // Keep default
+    }
+  }
+
+  return {
+    reviewer_name: name.substring(0, 100),
+    rating: Math.min(5, Math.max(1, rating)),
+    review_text: text.substring(0, 1000),
+    review_date: date,
   }
 }

@@ -186,6 +186,78 @@ async function shouldPostReview(companyId: string, frequency: number = 3): Promi
   return recentReviewCount === 0 && recentPosts.length >= (frequency - 1)
 }
 
+// Schedule a specific media item immediately (called on upload)
+export async function scheduleMediaItem(company: Company, media: MediaItem): Promise<{
+  success: boolean
+  postId?: string
+  error?: string
+}> {
+  const supabase = createAdminClient()
+
+  try {
+    // Get existing scheduled posts for slot calculation
+    const { data: existingPosts } = await supabase
+      .from('scheduled_posts')
+      .select('scheduled_for')
+      .eq('company_id', company.id)
+      .eq('status', 'pending')
+      .gte('scheduled_for', new Date().toISOString())
+
+    const existingSlots = (existingPosts || []).map(p => new Date(p.scheduled_for))
+    const scheduledFor = getNextPostingSlot(
+      existingSlots,
+      company.posts_per_week || 5,
+      company.posting_times || DEFAULT_POSTING_TIMES
+    )
+
+    // Generate caption
+    const { caption, hashtags } = await generateCaption(
+      company,
+      null,
+      media,
+      'instagram'
+    )
+
+    // Create scheduled post
+    const { data: post, error } = await supabase
+      .from('scheduled_posts')
+      .insert({
+        company_id: company.id,
+        project_id: media.source_project_id || null,
+        media_id: media.id,
+        image_url: media.image_url,
+        media_type: media.media_type || 'image',
+        caption,
+        hashtags,
+        scheduled_for: scheduledFor.toISOString(),
+        status: 'pending',
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Failed to schedule media item:', error)
+      return { success: false, error: 'Failed to schedule post' }
+    }
+
+    // Mark media as scheduled
+    await supabase
+      .from('media_library')
+      .update({
+        times_posted: (media.times_posted || 0) + 1,
+        last_posted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', media.id)
+
+    console.log(`[Schedule] Scheduled media ${media.id} for ${scheduledFor.toISOString()}`)
+    return { success: true, postId: post.id }
+  } catch (error) {
+    console.error('Schedule media item error:', error)
+    return { success: false, error: 'Scheduling failed' }
+  }
+}
+
 // Schedule a new post for a company
 export async function schedulePost(company: Company, excludeProjectIds: string[] = [], excludeMediaIds: string[] = []): Promise<{
   success: boolean

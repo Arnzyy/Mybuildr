@@ -84,7 +84,7 @@ export default function PostDetailActions({ post }: PostDetailActionsProps) {
                 type="datetime-local"
                 value={scheduledFor}
                 onChange={(e) => setScheduledFor(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full min-w-0 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 appearance-none"
               />
             </div>
 

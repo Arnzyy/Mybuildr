@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getCompanyForUser } from '@/lib/supabase/queries'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { hasFeature } from '@/lib/features'
-import { autoSchedulePosts } from '@/lib/posting/auto-schedule'
+import { autoScheduleProject } from '@/lib/posting/auto-schedule'
 
 // GET all projects
 export async function GET() {
@@ -97,9 +97,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create project' }, { status: 500 })
     }
 
-    // Auto-schedule posts when new project with images is created
-    if (images && images.length > 0) {
-      await autoSchedulePosts(company)
+    // Auto-schedule this project as a carousel post immediately
+    if (images && images.length > 0 && project) {
+      await autoScheduleProject(company, project.id)
     }
 
     return NextResponse.json({ project })

@@ -45,13 +45,20 @@ export async function DELETE(
       return NextResponse.json({ error: 'Can only delete pending or failed posts' }, { status: 400 })
     }
 
-    // If this post has a media_id, mark it as posted so it never gets scheduled again
+    // If this post has a media_id, mark the media as unavailable so it won't be scheduled again
     if (post.media_id) {
+      // Get current times_posted to decrement it (since this post was cancelled, not actually posted)
+      const { data: mediaItem } = await admin
+        .from('media_library')
+        .select('times_posted')
+        .eq('id', post.media_id)
+        .single()
+
       await admin
         .from('media_library')
         .update({
-          times_posted: 999, // Mark as "deleted" - will never be selected again
-          last_posted_at: new Date().toISOString(),
+          is_available: false,
+          times_posted: Math.max((mediaItem?.times_posted || 1) - 1, 0),
           updated_at: new Date().toISOString(),
         })
         .eq('id', post.media_id)

@@ -217,14 +217,13 @@ export default function PostsList({ initialPosts }: PostsListProps) {
                         <ChevronDown className="w-4 h-4" />
                       </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => startEdit(post)}
+                    <Link
+                      href={`/admin/posts/${post.id}`}
                       className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
                       title="Edit"
                     >
                       <Edit2 className="w-4 h-4" />
-                    </button>
+                    </Link>
                     <button
                       type="button"
                       onClick={() => handleCancel(post.id)}

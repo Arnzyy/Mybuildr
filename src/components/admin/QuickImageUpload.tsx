@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react'
 
-export default function QuickImageUpload() {
+export default function QuickImageUpload({ variant = 'button' }: { variant?: 'button' | 'card' }) {
   const router = useRouter()
   const [uploading, setUploading] = useState(false)
   const [showModal, setShowModal] = useState(false)
@@ -57,14 +57,39 @@ export default function QuickImageUpload() {
 
   return (
     <>
-      {/* Upload Button */}
-      <button
-        onClick={() => fileInputRef.current?.click()}
-        className="inline-flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors"
-      >
-        <ImageIcon className="w-4 h-4" />
-        <span>Upload Images</span>
-      </button>
+      {/* Upload Button / Card */}
+      {variant === 'card' ? (
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="w-full text-left bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border-2 border-blue-200 p-6 hover:border-blue-400 hover:shadow-md transition-all group"
+        >
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+              <ImageIcon className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 mb-1">Upload Images</h3>
+              <p className="text-sm text-gray-600 mb-2">
+                Quick upload individual images
+              </p>
+              <ul className="text-xs text-gray-500 space-y-1">
+                <li>• Each image posts as a single social media post</li>
+                <li>• Automatically scheduled to post</li>
+                <li>• No project details needed</li>
+              </ul>
+            </div>
+          </div>
+        </button>
+      ) : (
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="inline-flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+        >
+          <ImageIcon className="w-4 h-4" />
+          <span>Upload Images</span>
+        </button>
+      )}
 
       {/* Hidden File Input */}
       <input

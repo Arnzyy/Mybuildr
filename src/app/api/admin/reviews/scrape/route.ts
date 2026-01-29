@@ -28,7 +28,7 @@ export async function POST() {
     }
 
     // Scrape reviews
-    const scrapedReviews = await scrapeCheckatradeReviews(company.checkatrade_url, 20)
+    const scrapedReviews = await scrapeCheckatradeReviews(company.checkatrade_url, 50)
 
     if (scrapedReviews.length === 0) {
       return NextResponse.json({
