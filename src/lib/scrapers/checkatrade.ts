@@ -49,22 +49,24 @@ export async function scrapeCheckatradeReviews(
 
     // Try to extract from React streaming data (self.__next_f.push)
     // Checkatrade uses Next.js App Router with RSC streaming
-    // Look for JSON objects containing review data in the raw HTML
-    const reviewMatches = html.matchAll(/"summary"\s*:\s*"((?:[^"\\]|\\.)*)"/g)
+    // The data uses escaped quotes like: "summary\":\"actual text\"
+    // Normalize by removing backslash-escaped quotes so we can use simple regex
+    const normalized = html.replace(/\\"/g, '"')
+
+    const reviewMatches = normalized.matchAll(/"summary"\s*:\s*"((?:[^"\\]|\\.)*)"/g)
     const allSummaries = [...reviewMatches]
 
     if (allSummaries.length > 0) {
-      // For each summary, find the nearest displayName, rating, and createdAt
       for (const match of allSummaries) {
         if (reviews.length >= limit) break
 
-        const text = match[1].replace(/\\"/g, '"').replace(/\\n/g, '\n').trim()
+        const text = match[1].replace(/\\n/g, '\n').trim()
         if (!text || text.length < 10) continue
 
         // Search nearby context (500 chars before and after) for related fields
         const start = Math.max(0, (match.index || 0) - 500)
-        const end = Math.min(html.length, (match.index || 0) + match[0].length + 500)
-        const context = html.substring(start, end)
+        const end = Math.min(normalized.length, (match.index || 0) + match[0].length + 500)
+        const context = normalized.substring(start, end)
 
         const nameMatch = context.match(/"displayName"\s*:\s*"((?:[^"\\]|\\.)*)"/)?.[1] || 'Customer'
         const ratingMatch = context.match(/"rating"\s*:\s*([\d.]+)/)?.[1]
