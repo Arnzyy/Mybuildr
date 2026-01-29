@@ -23,25 +23,20 @@ export async function scrapeCheckatradeReviews(
       reviewsUrl += '/reviews'
     }
 
-    // Fetch with full browser-like headers to avoid 403
-    const response = await fetch(reviewsUrl, {
+    // Try direct fetch first, fall back to proxy if blocked (403)
+    let response = await fetch(reviewsUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
         'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-        'Sec-Ch-Ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-        'Sec-Ch-Ua-Mobile': '?0',
-        'Sec-Ch-Ua-Platform': '"Windows"',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'none',
-        'Sec-Fetch-User': '?1',
-        'Upgrade-Insecure-Requests': '1',
       },
     })
+
+    // If blocked, use allorigins proxy as fallback
+    if (!response.ok) {
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(reviewsUrl)}`
+      response = await fetch(proxyUrl)
+    }
 
     if (!response.ok) {
       throw new Error(`Failed to fetch Checkatrade page (${response.status})`)
@@ -52,14 +47,64 @@ export async function scrapeCheckatradeReviews(
 
     const reviews: ScrapedReview[] = []
 
-    // Try to extract from __NEXT_DATA__ first (Next.js server-rendered data)
+    // Try to extract from React streaming data (self.__next_f.push)
+    // Checkatrade uses Next.js App Router with RSC streaming
+    // Look for JSON objects containing review data in the raw HTML
+    const reviewMatches = html.matchAll(/"summary"\s*:\s*"((?:[^"\\]|\\.)*)"/g)
+    const allSummaries = [...reviewMatches]
+
+    if (allSummaries.length > 0) {
+      // For each summary, find the nearest displayName, rating, and createdAt
+      for (const match of allSummaries) {
+        if (reviews.length >= limit) break
+
+        const text = match[1].replace(/\\"/g, '"').replace(/\\n/g, '\n').trim()
+        if (!text || text.length < 10) continue
+
+        // Search nearby context (500 chars before and after) for related fields
+        const start = Math.max(0, (match.index || 0) - 500)
+        const end = Math.min(html.length, (match.index || 0) + match[0].length + 500)
+        const context = html.substring(start, end)
+
+        const nameMatch = context.match(/"displayName"\s*:\s*"((?:[^"\\]|\\.)*)"/)?.[1] || 'Customer'
+        const ratingMatch = context.match(/"rating"\s*:\s*([\d.]+)/)?.[1]
+        const dateMatch = context.match(/"createdAt"\s*:\s*"((?:[^"\\]|\\.)*)"/)?.[1]
+
+        // Checkatrade uses /10, convert to /5
+        let rating = 5
+        if (ratingMatch) {
+          const val = parseFloat(ratingMatch)
+          rating = val > 5 ? Math.round(val / 2) : Math.round(val)
+        }
+
+        let date = new Date().toISOString().split('T')[0]
+        if (dateMatch) {
+          try {
+            const parsed = new Date(dateMatch)
+            if (!isNaN(parsed.getTime())) {
+              date = parsed.toISOString().split('T')[0]
+            }
+          } catch { /* keep default */ }
+        }
+
+        reviews.push({
+          reviewer_name: nameMatch.substring(0, 100),
+          rating: Math.min(5, Math.max(1, rating)),
+          review_text: text.substring(0, 1000),
+          review_date: date,
+        })
+      }
+
+      if (reviews.length > 0) return reviews
+    }
+
+    // Try __NEXT_DATA__ (older Next.js Pages Router)
     const nextDataScript = $('script#__NEXT_DATA__').html()
     if (nextDataScript) {
       try {
         const nextData = JSON.parse(nextDataScript)
         const pageProps = nextData?.props?.pageProps
 
-        // Look for reviews in the page props (traverse the object)
         const reviewsData = findReviews(pageProps)
         if (reviewsData && reviewsData.length > 0) {
           for (const r of reviewsData.slice(0, limit)) {
