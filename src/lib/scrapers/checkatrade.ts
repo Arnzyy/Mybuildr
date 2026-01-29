@@ -32,10 +32,21 @@ export async function scrapeCheckatradeReviews(
       },
     })
 
-    // If blocked, use allorigins proxy as fallback
+    // If blocked, try multiple CORS proxies as fallback
     if (!response.ok) {
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(reviewsUrl)}`
-      response = await fetch(proxyUrl)
+      const proxies = [
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(reviewsUrl)}`,
+        `https://corsproxy.io/?${encodeURIComponent(reviewsUrl)}`,
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(reviewsUrl)}`,
+      ]
+      for (const proxyUrl of proxies) {
+        try {
+          response = await fetch(proxyUrl)
+          if (response.ok) break
+        } catch {
+          // Try next proxy
+        }
+      }
     }
 
     if (!response.ok) {
