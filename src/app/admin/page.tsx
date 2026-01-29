@@ -24,12 +24,16 @@ export default async function AdminDashboard() {
   if (!company) redirect('/login')
 
   const projects = await getCompanyProjects(company.id)
-  const totalPhotos = projects.reduce((sum, p) => sum + (p.images?.length || 0), 0)
   const hasSocialConnected = hasFeature(company.tier, 'social_connections') && company.posting_enabled
 
   // Get data for health check
   const media = await getCompanyMedia(company.id)
   const availableMedia = media.filter(m => m.is_available)
+
+  // Count all photos: project images + individual uploads (not linked to a project)
+  const projectPhotos = projects.reduce((sum, p) => sum + (p.images?.length || 0), 0)
+  const individualPhotos = media.filter(m => !m.source_project_id).length
+  const totalPhotos = projectPhotos + individualPhotos
 
   const { data: scheduledPosts } = await supabase
     .from('scheduled_posts')
