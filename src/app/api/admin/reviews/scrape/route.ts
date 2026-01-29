@@ -82,6 +82,13 @@ export async function POST() {
       return NextResponse.json({ error: 'Failed to import reviews' }, { status: 500 })
     }
 
+    // Fix any reviews with invalid names (e.g. "$undefined" from RSC data)
+    await admin
+      .from('reviews')
+      .update({ reviewer_name: 'Customer' })
+      .eq('company_id', company.id)
+      .or('reviewer_name.eq.$undefined,reviewer_name.like.$%')
+
     return NextResponse.json({
       success: true,
       imported: newReviews.length,

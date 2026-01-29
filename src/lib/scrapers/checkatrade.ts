@@ -79,7 +79,8 @@ export async function scrapeCheckatradeReviews(
         const end = Math.min(normalized.length, (match.index || 0) + match[0].length + 500)
         const context = normalized.substring(start, end)
 
-        const nameMatch = context.match(/"displayName"\s*:\s*"((?:[^"\\]|\\.)*)"/)?.[1] || 'Customer'
+        const rawName = context.match(/"displayName"\s*:\s*"((?:[^"\\]|\\.)*)"/)?.[1]
+        const nameMatch = (rawName && rawName.length > 1 && !rawName.startsWith('$') && rawName !== 'undefined') ? rawName : 'Customer'
         const ratingMatch = context.match(/"rating"\s*:\s*([\d.]+)/)?.[1]
         const dateMatch = context.match(/"createdAt"\s*:\s*"((?:[^"\\]|\\.)*)"/)?.[1]
 
