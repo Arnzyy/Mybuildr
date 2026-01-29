@@ -11,9 +11,16 @@ interface MediaLibraryViewProps {
   individualImages: MediaItem[]
 }
 
+const INITIAL_LIMIT = 5
+
 export default function MediaLibraryView({ projects, individualImages }: MediaLibraryViewProps) {
   const router = useRouter()
   const [selectedProject, setSelectedProject] = useState<string | null>(null)
+  const [showAllProjects, setShowAllProjects] = useState(false)
+  const [showAllImages, setShowAllImages] = useState(false)
+
+  const visibleProjects = showAllProjects ? projects : projects.slice(0, INITIAL_LIMIT)
+  const visibleImages = showAllImages ? individualImages : individualImages.slice(0, INITIAL_LIMIT)
 
   const handleDelete = async (type: 'project' | 'image', id: string) => {
     if (!confirm(`Delete this ${type}?`)) return
@@ -40,7 +47,7 @@ export default function MediaLibraryView({ projects, individualImages }: MediaLi
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
+            {visibleProjects.map((project) => (
               <div
                 key={project.id}
                 className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
@@ -107,6 +114,15 @@ export default function MediaLibraryView({ projects, individualImages }: MediaLi
               </div>
             ))}
           </div>
+
+          {!showAllProjects && projects.length > INITIAL_LIMIT && (
+            <button
+              onClick={() => setShowAllProjects(true)}
+              className="mt-4 w-full py-2.5 text-sm font-medium text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors"
+            >
+              View all {projects.length} projects
+            </button>
+          )}
         </div>
       )}
 
@@ -120,7 +136,7 @@ export default function MediaLibraryView({ projects, individualImages }: MediaLi
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {individualImages.map((image) => (
+            {visibleImages.map((image) => (
               <div
                 key={image.id}
                 className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
@@ -163,6 +179,15 @@ export default function MediaLibraryView({ projects, individualImages }: MediaLi
               </div>
             ))}
           </div>
+
+          {!showAllImages && individualImages.length > INITIAL_LIMIT && (
+            <button
+              onClick={() => setShowAllImages(true)}
+              className="mt-4 w-full py-2.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+            >
+              View all {individualImages.length} images
+            </button>
+          )}
         </div>
       )}
     </div>

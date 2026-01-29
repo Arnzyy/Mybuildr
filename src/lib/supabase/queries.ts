@@ -39,7 +39,7 @@ export async function getCompanyProjects(companyId: string): Promise<Project[]> 
     .from('projects')
     .select('*')
     .eq('company_id', companyId)
-    .order('display_order', { ascending: true })
+    .order('created_at', { ascending: false })
 
   if (error || !data) return []
   return data as Project[]
