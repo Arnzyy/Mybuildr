@@ -61,8 +61,10 @@ export async function GET(request: NextRequest) {
       }
     )
     const accountsData = await accountsResponse.json()
+    console.log('Google Business accounts response:', JSON.stringify(accountsData))
 
     if (!accountsData.accounts || accountsData.accounts.length === 0) {
+      console.error('No Google Business accounts found. Status:', accountsResponse.status, 'Data:', JSON.stringify(accountsData))
       return NextResponse.redirect(`${baseUrl}/admin/social?error=no_google_business`)
     }
 
