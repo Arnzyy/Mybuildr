@@ -18,6 +18,39 @@ export default function QuickImageUpload({ variant = 'button' }: { variant?: 'bu
     }
   }
 
+  const compressImage = async (file: File, maxWidth = 2048, quality = 0.8): Promise<File> => {
+    if (!file.type.startsWith('image/') || file.size < 1024 * 1024) return file
+
+    return new Promise((resolve) => {
+      const img = new window.Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        let { width, height } = img
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width)
+          width = maxWidth
+        }
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(img, 0, 0, width, height)
+        canvas.toBlob(
+          (blob) => {
+            if (blob && blob.size < file.size) {
+              resolve(new File([blob], file.name, { type: 'image/jpeg' }))
+            } else {
+              resolve(file)
+            }
+          },
+          'image/jpeg',
+          quality
+        )
+      }
+      img.onerror = () => resolve(file)
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
   const handleUpload = async () => {
     if (files.length === 0) return
 
@@ -26,8 +59,9 @@ export default function QuickImageUpload({ variant = 'button' }: { variant?: 'bu
     try {
       // Upload each file
       for (const file of files) {
+        const compressed = await compressImage(file)
         const formData = new FormData()
-        formData.append('file', file)
+        formData.append('file', compressed)
 
         const res = await fetch('/api/admin/media/upload', {
           method: 'POST',

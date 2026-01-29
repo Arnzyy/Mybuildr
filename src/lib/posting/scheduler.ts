@@ -9,7 +9,7 @@ const UK_TIMEZONE = 'Europe/London'
 // Default posting times (hour in 24h format) - fallback if company hasn't set custom times
 const DEFAULT_POSTING_TIMES = [8, 12, 18] // 8am, 12pm, 6pm
 
-// Get next available posting slot
+// Get next available posting slot - always AFTER the last existing post
 function getNextPostingSlot(
   existingSlots: Date[],
   postsPerWeek: number = 5,
@@ -18,13 +18,21 @@ function getNextPostingSlot(
   const now = new Date()
   const ukNow = new Date(now.toLocaleString('en-US', { timeZone: UK_TIMEZONE }))
 
-  // Start from tomorrow
-  const checkDate = new Date(ukNow)
-  checkDate.setDate(checkDate.getDate() + 1)
+  // Find the latest existing post - new posts go AFTER it, never between existing ones
+  let startAfter = now
+  if (existingSlots.length > 0) {
+    const latestExisting = new Date(Math.max(...existingSlots.map(d => d.getTime())))
+    if (latestExisting > startAfter) {
+      startAfter = latestExisting
+    }
+  }
+
+  // Start from the day of the latest post (or tomorrow if no posts)
+  const checkDate = new Date(new Date(startAfter.toLocaleString('en-US', { timeZone: UK_TIMEZONE })))
   checkDate.setHours(0, 0, 0, 0)
 
-  // Look for next available slot
-  for (let day = 0; day < 14; day++) {
+  // Look for next available slot AFTER the latest existing post
+  for (let day = 0; day < 30; day++) {
     const date = new Date(checkDate)
     date.setDate(date.getDate() + day)
 
@@ -33,18 +41,13 @@ function getNextPostingSlot(
       const slot = new Date(date)
       slot.setHours(hour, 0, 0, 0)
 
+      // Skip if not after the latest existing post
+      if (slot <= startAfter) continue
+
       // Skip if in the past
       if (slot <= now) continue
 
-      // Check if slot is already taken
-      const slotTaken = existingSlots.some(existing => {
-        const existingDate = new Date(existing)
-        return Math.abs(existingDate.getTime() - slot.getTime()) < 60 * 60 * 1000 // Within 1 hour
-      })
-
-      if (!slotTaken) {
-        return slot
-      }
+      return slot
     }
   }
 
