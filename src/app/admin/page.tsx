@@ -149,7 +149,10 @@ export default async function AdminDashboard() {
           </div>
         </Link>
 
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <Link
+          href="/admin/photos"
+          className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow"
+        >
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
               <Camera className="w-6 h-6 text-green-600" />
@@ -159,7 +162,7 @@ export default async function AdminDashboard() {
               <p className="text-sm text-gray-500">Photos</p>
             </div>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* View site button */}
