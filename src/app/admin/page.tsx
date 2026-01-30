@@ -135,7 +135,7 @@ export default async function AdminDashboard() {
       {/* Quick stats row */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <Link
-          href="/admin/projects"
+          href="/admin/photos"
           className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow"
         >
           <div className="flex items-center gap-3">
