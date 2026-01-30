@@ -18,6 +18,7 @@ export default function ImageUploader({
   maxImages = 10
 }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 })
   const [dragOver, setDragOver] = useState(false)
 
   const compressImage = async (file: File, maxWidth = 2048, quality = 0.8): Promise<File> => {
@@ -90,10 +91,12 @@ export default function ImageUploader({
 
     const filesToUpload = Array.from(files).slice(0, remainingSlots)
     setUploading(true)
+    setUploadProgress({ current: 0, total: filesToUpload.length })
 
     const newUrls: string[] = []
-    for (const file of filesToUpload) {
-      const url = await uploadFile(file)
+    for (let i = 0; i < filesToUpload.length; i++) {
+      setUploadProgress({ current: i + 1, total: filesToUpload.length })
+      const url = await uploadFile(filesToUpload[i])
       if (url) {
         newUrls.push(url)
       }
@@ -149,9 +152,20 @@ export default function ImageUploader({
         }`}
       >
         {uploading ? (
-          <div className="flex flex-col items-center">
-            <Loader2 className="w-12 h-12 text-orange-500 animate-spin mb-3" />
-            <p className="text-gray-600 font-medium">Uploading...</p>
+          <div className="flex flex-col items-center w-full max-w-xs mx-auto">
+            <p className="text-gray-900 font-semibold mb-1">
+              Uploading photo {uploadProgress.current} of {uploadProgress.total}
+            </p>
+            <p className="text-gray-500 text-sm mb-4">Please don&apos;t close this page</p>
+            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+              <div
+                className="bg-orange-500 h-3 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress.total > 0 ? (uploadProgress.current / uploadProgress.total) * 100 : 0}%` }}
+              />
+            </div>
+            <p className="text-gray-400 text-xs mt-2">
+              {Math.round(uploadProgress.total > 0 ? (uploadProgress.current / uploadProgress.total) * 100 : 0)}%
+            </p>
           </div>
         ) : (
           <>
