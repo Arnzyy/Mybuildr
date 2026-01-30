@@ -3,7 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { getCompanyForUser } from '@/lib/supabase/queries'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { hasFeature } from '@/lib/features'
-import { autoScheduleProject } from '@/lib/posting/auto-schedule'
+import { generateCaption } from '@/lib/ai/captions'
+import { getNextPostingSlot } from '@/lib/posting/scheduler'
 
 // GET all projects
 export async function GET() {
@@ -97,15 +98,63 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create project' }, { status: 500 })
     }
 
-    // Auto-schedule this project as a carousel post immediately
-    // Wait briefly for the DB trigger to sync images to media_library
+    // Schedule a post for this project directly - no indirection, no silent failures
     if (images && images.length > 0 && project) {
-      await new Promise(resolve => setTimeout(resolve, 1000))
       try {
-        await autoScheduleProject(company, project.id)
-        console.log('[Projects] Auto-scheduled project:', project.id)
-      } catch (err) {
-        console.error('[Projects] Failed to auto-schedule project:', err)
+        // Get existing pending posts to find the next available slot
+        const { data: existingPosts } = await admin
+          .from('scheduled_posts')
+          .select('scheduled_for')
+          .eq('company_id', company.id)
+          .eq('status', 'pending')
+          .gte('scheduled_for', new Date().toISOString())
+
+        const existingSlots = (existingPosts || []).map((p: { scheduled_for: string }) => new Date(p.scheduled_for))
+        const scheduledFor = getNextPostingSlot(existingSlots)
+
+        // Generate caption using the project context
+        const mediaContext = {
+          id: project.id,
+          company_id: company.id,
+          image_url: images[0],
+          title: title,
+          description: description || null,
+          location: location || null,
+          work_type: project_type || null,
+          media_type: 'image' as const,
+          is_available: true,
+          times_posted: 0,
+          source_project_id: project.id,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          last_posted_at: null,
+        }
+
+        const { caption, hashtags } = await generateCaption(company, null, mediaContext, 'instagram')
+
+        // Create the scheduled post directly
+        const { data: post, error: postError } = await admin
+          .from('scheduled_posts')
+          .insert({
+            company_id: company.id,
+            project_id: project.id,
+            image_url: images[0],
+            media_type: 'image',
+            caption,
+            hashtags,
+            scheduled_for: scheduledFor.toISOString(),
+            status: 'pending',
+          })
+          .select()
+          .single()
+
+        if (postError) {
+          console.error('[Projects] Failed to create scheduled post:', postError)
+        } else {
+          console.log('[Projects] Scheduled post', post.id, 'for', scheduledFor.toISOString())
+        }
+      } catch (scheduleErr) {
+        console.error('[Projects] Error scheduling post:', scheduleErr)
       }
     }
 

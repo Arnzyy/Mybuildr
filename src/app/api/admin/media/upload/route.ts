@@ -4,7 +4,8 @@ import { getCompanyForUser } from '@/lib/supabase/queries'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { uploadToR2, createUploadParams } from '@/lib/r2/client'
 import { hasFeature } from '@/lib/features'
-import { autoScheduleMedia } from '@/lib/posting/auto-schedule'
+import { generateCaption } from '@/lib/ai/captions'
+import { getNextPostingSlot } from '@/lib/posting/scheduler'
 
 export async function POST(request: NextRequest) {
   try {
@@ -73,8 +74,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to save media' }, { status: 500 })
     }
 
-    // Auto-schedule this specific media item immediately
-    await autoScheduleMedia(company, media)
+    // Schedule a post for this image directly - no indirection, no silent failures
+    try {
+      const { data: existingPosts } = await admin
+        .from('scheduled_posts')
+        .select('scheduled_for')
+        .eq('company_id', company.id)
+        .eq('status', 'pending')
+        .gte('scheduled_for', new Date().toISOString())
+
+      const existingSlots = (existingPosts || []).map((p: { scheduled_for: string }) => new Date(p.scheduled_for))
+      const scheduledFor = getNextPostingSlot(existingSlots)
+
+      const { caption, hashtags } = await generateCaption(company, null, media, 'instagram')
+
+      const { data: post, error: postError } = await admin
+        .from('scheduled_posts')
+        .insert({
+          company_id: company.id,
+          media_id: media.id,
+          image_url: imageUrl,
+          media_type: media.media_type || 'image',
+          caption,
+          hashtags,
+          scheduled_for: scheduledFor.toISOString(),
+          status: 'pending',
+        })
+        .select()
+        .single()
+
+      if (postError) {
+        console.error('[Media Upload] Failed to create scheduled post:', postError)
+      } else {
+        console.log('[Media Upload] Scheduled post', post.id, 'for', scheduledFor.toISOString())
+      }
+    } catch (scheduleErr) {
+      console.error('[Media Upload] Error scheduling post:', scheduleErr)
+    }
 
     return NextResponse.json({ media, url: imageUrl })
   } catch (error) {

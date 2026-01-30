@@ -10,7 +10,7 @@ const UK_TIMEZONE = 'Europe/London'
 const DEFAULT_POSTING_TIMES = [8, 12, 18] // 8am, 12pm, 6pm
 
 // Get next available posting slot - always AFTER the last existing post
-function getNextPostingSlot(
+export function getNextPostingSlot(
   existingSlots: Date[],
   postsPerWeek: number = 5,
   postingTimes: number[] = DEFAULT_POSTING_TIMES
