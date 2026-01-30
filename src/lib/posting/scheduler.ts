@@ -9,7 +9,7 @@ const UK_TIMEZONE = 'Europe/London'
 // Default posting times (hour in 24h format) - fallback if company hasn't set custom times
 const DEFAULT_POSTING_TIMES = [8, 12, 18] // 8am, 12pm, 6pm
 
-// Get next available posting slot - finds the earliest open slot from now
+// Get next available posting slot - schedules AFTER the last existing post
 export function getNextPostingSlot(
   existingSlots: Date[],
   postsPerWeek: number = 5,
@@ -18,13 +18,18 @@ export function getNextPostingSlot(
   const now = new Date()
   const ukNow = new Date(now.toLocaleString('en-US', { timeZone: UK_TIMEZONE }))
 
-  // Start checking from today
-  const checkDate = new Date(ukNow)
-  checkDate.setHours(0, 0, 0, 0)
+  // Find the latest existing post to schedule after it
+  const futureSlots = existingSlots.filter(s => s > now)
+  const lastPost = futureSlots.length > 0
+    ? new Date(Math.max(...futureSlots.map(s => s.getTime())))
+    : null
 
-  // Find the earliest open slot (not already taken by an existing post)
-  for (let day = 0; day < 30; day++) {
-    const date = new Date(checkDate)
+  // Start searching from the day of the last post (or today if no posts)
+  const startDate = new Date(lastPost || ukNow)
+  startDate.setHours(0, 0, 0, 0)
+
+  for (let day = 0; day < 60; day++) {
+    const date = new Date(startDate)
     date.setDate(date.getDate() + day)
 
     for (const hour of postingTimes) {
@@ -33,6 +38,9 @@ export function getNextPostingSlot(
 
       // Skip if in the past
       if (slot <= now) continue
+
+      // Skip if before or equal to the last existing post
+      if (lastPost && slot <= lastPost) continue
 
       // Check if this slot is already taken (within 1 hour of an existing post)
       const slotTaken = existingSlots.some(existing => {
@@ -45,8 +53,8 @@ export function getNextPostingSlot(
     }
   }
 
-  // Fallback: tomorrow at noon
-  const fallback = new Date(ukNow)
+  // Fallback: day after last post at noon
+  const fallback = new Date(lastPost || ukNow)
   fallback.setDate(fallback.getDate() + 1)
   fallback.setHours(12, 0, 0, 0)
   return fallback
