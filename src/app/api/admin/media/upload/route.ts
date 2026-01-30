@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to save media' }, { status: 500 })
     }
 
-    // Schedule a post for this image directly - no indirection, no silent failures
+    // Schedule a post for this image directly
     try {
       const { data: existingPosts } = await admin
         .from('scheduled_posts')
@@ -86,7 +86,18 @@ export async function POST(request: NextRequest) {
       const existingSlots = (existingPosts || []).map((p: { scheduled_for: string }) => new Date(p.scheduled_for))
       const scheduledFor = getNextPostingSlot(existingSlots)
 
-      const { caption, hashtags } = await generateCaption(company, null, media, 'instagram')
+      // Create post with fallback caption first - don't let AI block the insert
+      const workType = work_type || company.trade_type || 'work'
+      const loc = location || company.city || ''
+      const fallbackCaption = `Another great ${workType} project completed${loc ? ` in ${loc}` : ''}. Get in touch for a free quote!\n\n${company.name}${company.phone ? ` | Call: ${company.phone}` : ''}${company.city ? ` | ${company.city}` : ''}`
+      const fallbackHashtags = [
+        company.trade_type?.toLowerCase().replace(/\s+/g, '') || 'construction',
+        'ukbuilder',
+        company.city?.toLowerCase().replace(/\s+/g, '') || 'local',
+        ...(company.hashtag_preferences || []),
+      ]
+
+      console.log('[Media Upload] Creating scheduled post for media:', media.id)
 
       const { data: post, error: postError } = await admin
         .from('scheduled_posts')
@@ -95,8 +106,8 @@ export async function POST(request: NextRequest) {
           media_id: media.id,
           image_url: imageUrl,
           media_type: media.media_type || 'image',
-          caption,
-          hashtags,
+          caption: fallbackCaption,
+          hashtags: fallbackHashtags,
           scheduled_for: scheduledFor.toISOString(),
           status: 'pending',
         })
@@ -104,9 +115,20 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (postError) {
-        console.error('[Media Upload] Failed to create scheduled post:', postError)
+        console.error('[Media Upload] DB insert failed:', JSON.stringify(postError))
       } else {
-        console.log('[Media Upload] Scheduled post', post.id, 'for', scheduledFor.toISOString())
+        console.log('[Media Upload] Post created:', post.id)
+
+        try {
+          const { caption, hashtags } = await generateCaption(company, null, media, 'instagram')
+          await admin
+            .from('scheduled_posts')
+            .update({ caption, hashtags })
+            .eq('id', post.id)
+          console.log('[Media Upload] Caption upgraded with AI')
+        } catch (aiErr) {
+          console.log('[Media Upload] AI caption failed, keeping fallback:', aiErr)
+        }
       }
     } catch (scheduleErr) {
       console.error('[Media Upload] Error scheduling post:', scheduleErr)

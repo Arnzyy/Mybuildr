@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create project' }, { status: 500 })
     }
 
-    // Schedule a post for this project directly - no indirection, no silent failures
+    // Schedule a post for this project directly
     if (images && images.length > 0 && project) {
       try {
         // Get existing pending posts to find the next available slot
@@ -112,27 +112,19 @@ export async function POST(request: NextRequest) {
         const existingSlots = (existingPosts || []).map((p: { scheduled_for: string }) => new Date(p.scheduled_for))
         const scheduledFor = getNextPostingSlot(existingSlots)
 
-        // Generate caption using the project context
-        const mediaContext = {
-          id: project.id,
-          company_id: company.id,
-          image_url: images[0],
-          title: title,
-          description: description || null,
-          location: location || null,
-          work_type: project_type || null,
-          media_type: 'image' as const,
-          is_available: true,
-          times_posted: 0,
-          source_project_id: project.id,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          last_posted_at: null,
-        }
+        // Create the post FIRST with a simple caption - don't let AI generation block this
+        const workType = project_type || company.trade_type || 'work'
+        const loc = location || company.city || ''
+        const fallbackCaption = `Another great ${workType} project completed${loc ? ` in ${loc}` : ''}. Get in touch for a free quote!\n\n${company.name}${company.phone ? ` | Call: ${company.phone}` : ''}${company.city ? ` | ${company.city}` : ''}`
+        const fallbackHashtags = [
+          company.trade_type?.toLowerCase().replace(/\s+/g, '') || 'construction',
+          'ukbuilder',
+          company.city?.toLowerCase().replace(/\s+/g, '') || 'local',
+          ...(company.hashtag_preferences || []),
+        ]
 
-        const { caption, hashtags } = await generateCaption(company, null, mediaContext, 'instagram')
+        console.log('[Projects] Creating scheduled post for project:', project.id, 'at', scheduledFor.toISOString())
 
-        // Create the scheduled post directly
         const { data: post, error: postError } = await admin
           .from('scheduled_posts')
           .insert({
@@ -140,8 +132,8 @@ export async function POST(request: NextRequest) {
             project_id: project.id,
             image_url: images[0],
             media_type: 'image',
-            caption,
-            hashtags,
+            caption: fallbackCaption,
+            hashtags: fallbackHashtags,
             scheduled_for: scheduledFor.toISOString(),
             status: 'pending',
           })
@@ -149,9 +141,40 @@ export async function POST(request: NextRequest) {
           .single()
 
         if (postError) {
-          console.error('[Projects] Failed to create scheduled post:', postError)
+          console.error('[Projects] DB insert failed:', JSON.stringify(postError))
         } else {
-          console.log('[Projects] Scheduled post', post.id, 'for', scheduledFor.toISOString())
+          console.log('[Projects] Post created:', post.id)
+
+          // Now try to upgrade caption with AI (non-blocking - if it fails, we still have the post)
+          try {
+            const mediaContext = {
+              id: project.id,
+              company_id: company.id,
+              image_url: images[0],
+              title: title,
+              description: description || null,
+              location: location || null,
+              work_type: project_type || null,
+              media_type: 'image' as const,
+              is_available: true,
+              times_posted: 0,
+              source_project_id: project.id,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              last_posted_at: null,
+            }
+
+            const { caption, hashtags } = await generateCaption(company, null, mediaContext, 'instagram')
+
+            await admin
+              .from('scheduled_posts')
+              .update({ caption, hashtags })
+              .eq('id', post.id)
+
+            console.log('[Projects] Caption upgraded with AI for post:', post.id)
+          } catch (aiErr) {
+            console.log('[Projects] AI caption failed, keeping fallback caption:', aiErr)
+          }
         }
       } catch (scheduleErr) {
         console.error('[Projects] Error scheduling post:', scheduleErr)
