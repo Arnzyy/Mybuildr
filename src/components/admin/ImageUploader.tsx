@@ -20,6 +20,7 @@ export default function ImageUploader({
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 })
   const [dragOver, setDragOver] = useState(false)
+  const [reorderFrom, setReorderFrom] = useState<number | null>(null)
 
   const compressImage = async (file: File, maxWidth = 2048, quality = 0.8): Promise<File> => {
     // Skip non-image or already small files
@@ -195,7 +196,21 @@ export default function ImageUploader({
           {images.map((url, index) => (
             <div
               key={url}
-              className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100"
+              className={`relative aspect-square rounded-lg overflow-hidden bg-gray-100 ${
+                reorderFrom === index
+                  ? 'ring-3 ring-orange-500 scale-95'
+                  : reorderFrom !== null
+                    ? 'ring-2 ring-dashed ring-gray-300 cursor-pointer'
+                    : ''
+              }`}
+              onClick={() => {
+                if (reorderFrom !== null && reorderFrom !== index) {
+                  moveImage(reorderFrom, index)
+                  setReorderFrom(null)
+                } else if (reorderFrom === index) {
+                  setReorderFrom(null)
+                }
+              }}
             >
               <Image
                 src={url}
@@ -204,22 +219,32 @@ export default function ImageUploader({
                 className="object-cover"
               />
 
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                {/* Drag handle */}
+              {/* Action buttons - always visible on mobile */}
+              <div className="absolute top-2 right-2 flex gap-1">
+                {images.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setReorderFrom(reorderFrom === index ? null : index)
+                    }}
+                    className={`p-1.5 rounded-lg shadow-sm ${
+                      reorderFrom === index
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-white/90 text-gray-700'
+                    }`}
+                    title="Move image"
+                  >
+                    <GripVertical className="w-4 h-4" />
+                  </button>
+                )}
                 <button
                   type="button"
-                  className="p-2 bg-white rounded-lg text-gray-700 hover:bg-gray-100"
-                  title="Drag to reorder"
-                >
-                  <GripVertical className="w-4 h-4" />
-                </button>
-
-                {/* Remove */}
-                <button
-                  type="button"
-                  onClick={() => removeImage(index)}
-                  className="p-2 bg-white rounded-lg text-red-600 hover:bg-red-50"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    removeImage(index)
+                  }}
+                  className="p-1.5 bg-white/90 rounded-lg text-red-600 shadow-sm"
                   title="Remove image"
                 >
                   <X className="w-4 h-4" />
@@ -232,14 +257,29 @@ export default function ImageUploader({
                   Cover
                 </div>
               )}
+
+              {/* Drop target indicator */}
+              {reorderFrom !== null && reorderFrom !== index && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                  <span className="bg-white text-gray-700 text-xs font-medium px-2 py-1 rounded shadow">
+                    Move here
+                  </span>
+                </div>
+              )}
             </div>
           ))}
         </div>
       )}
 
-      {images.length > 1 && (
+      {reorderFrom !== null && (
+        <p className="text-xs text-orange-600 text-center font-medium">
+          Tap where you want to move this photo, or tap the grip icon again to cancel.
+        </p>
+      )}
+
+      {images.length > 1 && reorderFrom === null && (
         <p className="text-xs text-gray-500 text-center">
-          First image is used as the cover photo. Drag to reorder.
+          First image is used as the cover photo. Tap the grip icon to reorder.
         </p>
       )}
     </div>
