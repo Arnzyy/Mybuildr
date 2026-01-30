@@ -46,22 +46,40 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
     )
   }
 
-  // Get scheduled posts
+  // Get scheduled posts - separate queries for accurate counts
   const admin = createAdminClient()
-  const { data: posts } = await admin
+
+  // Get accurate counts across ALL posts
+  const [
+    { count: pendingCount },
+    { count: postedCount },
+    { count: failedCount },
+  ] = await Promise.all([
+    admin.from('scheduled_posts').select('*', { count: 'exact', head: true }).eq('company_id', company.id).eq('status', 'pending'),
+    admin.from('scheduled_posts').select('*', { count: 'exact', head: true }).eq('company_id', company.id).eq('status', 'posted'),
+    admin.from('scheduled_posts').select('*', { count: 'exact', head: true }).eq('company_id', company.id).eq('status', 'failed'),
+  ])
+
+  // Get posts for display - fetch based on current filter
+  const query = admin
     .from('scheduled_posts')
     .select(`
       *,
       project:projects(title, images)
     `)
     .eq('company_id', company.id)
-    .order('scheduled_for', { ascending: true })
-    .limit(50)
 
-  // Count by status
-  const pendingCount = posts?.filter(p => p.status === 'pending').length || 0
-  const postedCount = posts?.filter(p => p.status === 'posted').length || 0
-  const failedCount = posts?.filter(p => p.status === 'failed').length || 0
+  if (statusFilter === 'pending') {
+    query.eq('status', 'pending').order('scheduled_for', { ascending: true })
+  } else if (statusFilter === 'posted') {
+    query.eq('status', 'posted').order('scheduled_for', { ascending: false })
+  } else if (statusFilter === 'failed') {
+    query.eq('status', 'failed').order('scheduled_for', { ascending: false })
+  } else {
+    query.order('scheduled_for', { ascending: false })
+  }
+
+  const { data: posts } = await query.limit(50)
 
   return (
     <div>
@@ -110,7 +128,7 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
               <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-xl sm:text-2xl font-bold text-gray-900">{pendingCount}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{pendingCount || 0}</p>
               <p className="text-xs sm:text-sm text-gray-500">Scheduled</p>
             </div>
           </div>
@@ -121,7 +139,7 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
               <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
             </div>
             <div>
-              <p className="text-xl sm:text-2xl font-bold text-gray-900">{postedCount}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{postedCount || 0}</p>
               <p className="text-xs sm:text-sm text-gray-500">Posted</p>
             </div>
           </div>
@@ -132,7 +150,7 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
               <span className="text-red-600 font-bold text-sm">!</span>
             </div>
             <div>
-              <p className="text-xl sm:text-2xl font-bold text-gray-900">{failedCount}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{failedCount || 0}</p>
               <p className="text-xs sm:text-sm text-gray-500">Failed</p>
             </div>
           </div>
