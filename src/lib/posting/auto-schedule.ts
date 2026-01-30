@@ -9,7 +9,12 @@ import { createAdminClient } from '@/lib/supabase/admin'
  */
 export async function autoScheduleMedia(company: Company, media: MediaItem): Promise<void> {
   try {
-    if (!hasFeature(company.tier, 'auto_posting') || !company.posting_enabled) {
+    if (!hasFeature(company.tier, 'auto_posting')) {
+      console.log('[Auto-Schedule] Skipping media - auto_posting not available for tier:', company.tier)
+      return
+    }
+    if (!company.posting_enabled) {
+      console.log('[Auto-Schedule] Skipping media - posting_enabled is false for:', company.slug)
       return
     }
 
@@ -30,14 +35,19 @@ export async function autoScheduleMedia(company: Company, media: MediaItem): Pro
  */
 export async function autoScheduleProject(company: Company, projectId: string): Promise<void> {
   try {
-    if (!hasFeature(company.tier, 'auto_posting') || !company.posting_enabled) {
+    if (!hasFeature(company.tier, 'auto_posting')) {
+      console.log('[Auto-Schedule] Skipping - auto_posting feature not available for tier:', company.tier)
+      return
+    }
+    if (!company.posting_enabled) {
+      console.log('[Auto-Schedule] Skipping - posting_enabled is false for company:', company.slug)
       return
     }
 
     const supabase = createAdminClient()
 
     // Get the first media item from this project (it will be used as the carousel representative)
-    const { data: media } = await supabase
+    const { data: media, error: mediaError } = await supabase
       .from('media_library')
       .select('*')
       .eq('source_project_id', projectId)
@@ -47,8 +57,25 @@ export async function autoScheduleProject(company: Company, projectId: string): 
       .limit(1)
       .single()
 
+    if (mediaError) {
+      console.error('[Auto-Schedule] Error querying media for project:', projectId, mediaError)
+    }
+
     if (!media) {
-      console.log('[Auto-Schedule] No available media found for project:', projectId)
+      // Fallback: query without times_posted filter in case trigger set it differently
+      const { data: anyMedia } = await supabase
+        .from('media_library')
+        .select('*')
+        .eq('source_project_id', projectId)
+        .limit(1)
+        .single()
+
+      if (!anyMedia) {
+        console.log('[Auto-Schedule] No media found at all for project:', projectId, '- DB trigger may not have fired')
+        return
+      }
+
+      console.log('[Auto-Schedule] Found media but filtered out (times_posted:', anyMedia.times_posted, 'is_available:', anyMedia.is_available, ')')
       return
     }
 

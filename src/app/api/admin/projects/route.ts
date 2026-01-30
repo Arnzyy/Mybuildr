@@ -98,8 +98,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Auto-schedule this project as a carousel post immediately
+    // Wait briefly for the DB trigger to sync images to media_library
     if (images && images.length > 0 && project) {
-      await autoScheduleProject(company, project.id)
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      try {
+        await autoScheduleProject(company, project.id)
+        console.log('[Projects] Auto-scheduled project:', project.id)
+      } catch (err) {
+        console.error('[Projects] Failed to auto-schedule project:', err)
+      }
     }
 
     return NextResponse.json({ project })
