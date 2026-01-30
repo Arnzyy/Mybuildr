@@ -129,6 +129,12 @@ export async function POST(request: NextRequest) {
         } catch (aiErr) {
           console.log('[Media Upload] AI caption failed, keeping fallback:', aiErr)
         }
+
+        // Mark media as used so cron doesn't pick it again
+        await admin
+          .from('media_library')
+          .update({ times_posted: 1, last_posted_at: new Date().toISOString() })
+          .eq('id', media.id)
       }
     } catch (scheduleErr) {
       console.error('[Media Upload] Error scheduling post:', scheduleErr)

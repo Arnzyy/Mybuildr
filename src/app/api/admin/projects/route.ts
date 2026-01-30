@@ -175,6 +175,12 @@ export async function POST(request: NextRequest) {
           } catch (aiErr) {
             console.log('[Projects] AI caption failed, keeping fallback caption:', aiErr)
           }
+
+          // Mark all media items for this project as used so cron doesn't pick them again
+          await admin
+            .from('media_library')
+            .update({ times_posted: 1, last_posted_at: new Date().toISOString() })
+            .eq('source_project_id', project.id)
         }
       } catch (scheduleErr) {
         console.error('[Projects] Error scheduling post:', scheduleErr)
