@@ -352,34 +352,24 @@ export default function SettingsForm({ company }: SettingsFormProps) {
               onChange={handleChange}
               className="w-full sm:w-48 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             >
-              <optgroup label="Weekly">
-                <option value={1}>1x per week</option>
-                <option value={2}>2x per week</option>
-                <option value={3}>3x per week</option>
-                <option value={5}>5x per week (Recommended)</option>
-                <option value={7}>7x per week</option>
-              </optgroup>
-              <optgroup label="Daily">
-                <option value={7}>1x per day (7/week)</option>
-                <option value={14}>2x per day (14/week)</option>
-                <option value={21}>3x per day (21/week) - MAX</option>
-              </optgroup>
+              <option value={1}>1x per week</option>
+              <option value={2}>2x per week</option>
+              <option value={3}>3x per week</option>
+              <option value={4}>4x per week</option>
+              <option value={5}>5x per week (Recommended)</option>
+              <option value={6}>6x per week</option>
+              <option value={7}>7x per week (daily)</option>
             </select>
             <p className="text-xs text-gray-500 mt-2">
-              How often we auto-post to social media. Posts are distributed across your selected time slots.
+              How many times per week we post to your social media. Maximum 1 post per day.
             </p>
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Posting Times (UK time)
-              </label>
-              <span className="text-sm font-medium text-gray-600">
-                {formData.posting_times.length}/3 slots selected
-              </span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Posting Time (UK time)
+            </label>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 gap-2">
               {[
                 { hour: 6, label: '6am' },
                 { hour: 7, label: '7am' },
@@ -399,40 +389,18 @@ export default function SettingsForm({ company }: SettingsFormProps) {
                 { hour: 21, label: '9pm' },
               ].map(({ hour, label }) => {
                 const isSelected = formData.posting_times.includes(hour)
-                const isDisabled = !isSelected && formData.posting_times.length >= 3
 
                 return (
                   <button
                     key={hour}
                     type="button"
-                    disabled={isDisabled}
                     onClick={() => {
-                      const currentTimes = formData.posting_times
-
-                      // Check if trying to add more than 3 slots
-                      if (!isSelected && currentTimes.length >= 3) {
-                        alert('You can select a maximum of 3 posting times')
-                        return
-                      }
-
-                      const newTimes = isSelected
-                        ? currentTimes.filter(h => h !== hour)
-                        : [...currentTimes, hour].sort((a, b) => a - b)
-
-                      // Ensure at least one time slot
-                      if (newTimes.length === 0) {
-                        alert('You must select at least one posting time')
-                        return
-                      }
-
-                      setFormData(prev => ({ ...prev, posting_times: newTimes }))
+                      setFormData(prev => ({ ...prev, posting_times: [hour] }))
                       setSaved(false)
                     }}
                     className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors ${
                       isSelected
                         ? 'bg-orange-500 border-orange-500 text-white'
-                        : isDisabled
-                        ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
                         : 'bg-white border-gray-300 text-gray-700 hover:border-orange-300'
                     }`}
                   >
@@ -442,7 +410,7 @@ export default function SettingsForm({ company }: SettingsFormProps) {
               })}
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              Select up to 3 times when your posts will go live. Posts will be distributed across these time slots throughout the week.
+              Choose what time your daily post goes live.
             </p>
           </div>
 

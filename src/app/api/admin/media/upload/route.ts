@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
         .gte('scheduled_for', new Date().toISOString())
 
       const existingSlots = (existingPosts || []).map((p: { scheduled_for: string }) => new Date(p.scheduled_for))
-      const scheduledFor = getNextPostingSlot(existingSlots)
+      const scheduledFor = getNextPostingSlot(existingSlots, company.posts_per_week || 7, company.posting_times || [12])
 
       // Create post with fallback caption first - don't let AI block the insert
       const workType = work_type || company.trade_type || 'work'

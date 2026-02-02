@@ -104,11 +104,7 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
           <div>
             <p className="font-medium text-blue-900">Posting frequency</p>
             <p className="text-sm text-blue-700">
-              Currently posting <strong>
-                {company.posts_per_week >= 14
-                  ? `${Math.floor(company.posts_per_week / 7)}x per day`
-                  : `${company.posts_per_week || 5}x per week`}
-              </strong> across connected platforms
+              Currently posting <strong>{company.posts_per_week || 5}x per week</strong> across connected platforms
             </p>
           </div>
           <Link
