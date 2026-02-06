@@ -4,9 +4,11 @@ import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import { LocalBusinessJsonLd } from '@/components/JsonLd'
 import { SITE_CONFIG } from '@/lib/constants'
+import { createClient } from '@/lib/supabase/server'
 
 interface Props {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ [key: string]: string | undefined }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -44,12 +46,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function BuilderSitePage({ params }: Props) {
+export default async function BuilderSitePage({ params, searchParams }: Props) {
   const { slug } = await params
+  const { preview } = await searchParams
   const company = await getCompanyBySlug(slug)
 
-  if (!company || !company.is_published) {
+  if (!company) {
     notFound()
+  }
+
+  // Allow preview if user is logged in as the site owner
+  if (!company.is_published) {
+    if (preview !== 'true') {
+      notFound()
+    }
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || user.email !== company.email) {
+      notFound()
+    }
   }
 
   const [projects, reviews] = await Promise.all([
