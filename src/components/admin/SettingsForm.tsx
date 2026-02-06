@@ -1,16 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Company } from '@/lib/supabase/types'
 import { TEMPLATE_CONFIGS } from '@/lib/templates/types'
+import type { TemplateName } from '@/lib/templates/types'
 import SettingsSection from './SettingsSection'
+import Image from 'next/image'
 import {
   Building2,
   Phone,
   Palette,
   Share2,
   Calendar,
-  Sparkles
+  Sparkles,
+  Upload,
+  X,
+  Loader2
 } from 'lucide-react'
 
 interface SettingsFormProps {
@@ -20,6 +25,10 @@ interface SettingsFormProps {
 export default function SettingsForm({ company }: SettingsFormProps) {
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [logoUrl, setLogoUrl] = useState(company.logo_url || '')
+  const [heroImageUrl, setHeroImageUrl] = useState(company.hero_image_url || '')
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [uploadingHero, setUploadingHero] = useState(false)
   const [formData, setFormData] = useState({
     name: company.name,
     email: company.email,
@@ -55,6 +64,40 @@ export default function SettingsForm({ company }: SettingsFormProps) {
     review_post_frequency: company.review_post_frequency ?? 3,
   })
 
+  const uploadImage = useCallback(async (file: File): Promise<string | null> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    try {
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: formData,
+      })
+      if (res.ok) {
+        const { url } = await res.json()
+        return url
+      }
+      return null
+    } catch {
+      return null
+    }
+  }, [])
+
+  const handleImageUpload = useCallback(async (
+    file: File,
+    setUrl: (url: string) => void,
+    setUploading: (v: boolean) => void
+  ) => {
+    setUploading(true)
+    const url = await uploadImage(file)
+    if (url) {
+      setUrl(url)
+      setSaved(false)
+    } else {
+      alert('Upload failed. Please try again.')
+    }
+    setUploading(false)
+  }, [uploadImage])
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData(prev => ({
       ...prev,
@@ -75,6 +118,8 @@ export default function SettingsForm({ company }: SettingsFormProps) {
           companyId: company.id,
           updates: {
             ...formData,
+            logo_url: logoUrl || null,
+            hero_image_url: heroImageUrl || null,
             services: formData.services.split(',').map(s => s.trim()).filter(Boolean),
             areas_covered: formData.areas_covered.split(',').map(s => s.trim()).filter(Boolean),
             posts_per_week: Number(formData.posts_per_week),
@@ -611,6 +656,136 @@ export default function SettingsForm({ company }: SettingsFormProps) {
         defaultOpen={true}
       >
         <div className="space-y-6">
+          {/* Hero Image */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Hero Image
+            </label>
+            <p className="text-xs text-gray-500 mb-3">
+              This is the main banner image on your website. Use a high-quality photo of your work.
+            </p>
+            {heroImageUrl ? (
+              <div className="relative w-full aspect-[21/9] rounded-lg overflow-hidden bg-gray-100">
+                <Image
+                  src={heroImageUrl}
+                  alt="Hero image"
+                  fill
+                  className="object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => { setHeroImageUrl(''); setSaved(false) }}
+                  className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-lg text-red-600 shadow-sm hover:bg-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <label className="block border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-orange-400 hover:bg-orange-50/50 transition-colors">
+                {uploadingHero ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin text-orange-500" />
+                    <span className="text-gray-600">Uploading...</span>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm font-medium text-gray-700">Upload hero image</p>
+                    <p className="text-xs text-gray-500 mt-1">JPG, PNG or WebP</p>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleImageUpload(file, setHeroImageUrl, setUploadingHero)
+                  }}
+                  className="hidden"
+                />
+              </label>
+            )}
+          </div>
+
+          {/* Logo */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Logo
+            </label>
+            <div className="flex items-start gap-4">
+              {logoUrl ? (
+                <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0">
+                  <Image
+                    src={logoUrl}
+                    alt="Logo"
+                    fill
+                    className="object-contain p-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setLogoUrl(''); setSaved(false) }}
+                    className="absolute -top-1 -right-1 p-1 bg-white rounded-full text-red-600 shadow-sm hover:bg-red-50"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex-shrink-0 w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 hover:bg-orange-50/50 transition-colors">
+                  {uploadingLogo ? (
+                    <Loader2 className="w-5 h-5 animate-spin text-orange-500" />
+                  ) : (
+                    <>
+                      <Upload className="w-5 h-5 text-gray-400 mb-1" />
+                      <span className="text-xs text-gray-500">Upload</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) handleImageUpload(file, setLogoUrl, setUploadingLogo)
+                    }}
+                    className="hidden"
+                  />
+                </label>
+              )}
+              <p className="text-xs text-gray-500 pt-1">
+                Your business logo. Square or transparent PNG works best.
+              </p>
+            </div>
+          </div>
+
+          {/* Template Selector */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Website Template
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {(Object.values(TEMPLATE_CONFIGS) as { name: TemplateName; displayName: string; description: string }[])
+                .filter(t => t.name !== 'daxa')
+                .map((template) => (
+                <button
+                  key={template.name}
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, template: template.name }))
+                    setSaved(false)
+                  }}
+                  className={`p-3 rounded-lg border-2 text-left transition-colors ${
+                    formData.template === template.name
+                      ? 'border-orange-500 bg-orange-50'
+                      : 'border-gray-200 hover:border-orange-300'
+                  }`}
+                >
+                  <p className="font-medium text-sm text-gray-900">{template.displayName}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{template.description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Colors */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
