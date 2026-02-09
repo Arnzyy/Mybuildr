@@ -2,8 +2,6 @@
 
 import { useState, useCallback } from 'react'
 import { Company } from '@/lib/supabase/types'
-import { TEMPLATE_CONFIGS } from '@/lib/templates/types'
-import type { TemplateName } from '@/lib/templates/types'
 import SettingsSection from './SettingsSection'
 import Image from 'next/image'
 import {
@@ -304,6 +302,9 @@ export default function SettingsForm({ company }: SettingsFormProps) {
         icon={<Share2 className="w-5 h-5" />}
         defaultOpen={false}
       >
+        <p className="text-sm text-gray-500 mb-6">
+          These links will appear as icons in your website footer, helping visitors find and follow you on social media.
+        </p>
         <div className="grid grid-cols-1 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -317,6 +318,7 @@ export default function SettingsForm({ company }: SettingsFormProps) {
               placeholder="https://instagram.com/yourbusiness"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             />
+            <p className="mt-1 text-xs text-gray-500">Shows an Instagram icon in your site footer</p>
           </div>
 
           <div>
@@ -331,6 +333,7 @@ export default function SettingsForm({ company }: SettingsFormProps) {
               placeholder="https://facebook.com/yourbusiness"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             />
+            <p className="mt-1 text-xs text-gray-500">Shows a Facebook icon in your site footer</p>
           </div>
 
           <div>
@@ -345,6 +348,7 @@ export default function SettingsForm({ company }: SettingsFormProps) {
               placeholder="https://checkatrade.com/trades/yourbusiness"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             />
+            <p className="mt-1 text-xs text-gray-500">Shows a Checkatrade badge in your footer and allows importing reviews</p>
           </div>
         </div>
       </SettingsSection>
@@ -753,35 +757,6 @@ export default function SettingsForm({ company }: SettingsFormProps) {
               <p className="text-xs text-gray-500 pt-1">
                 Your business logo. Square or transparent PNG works best.
               </p>
-            </div>
-          </div>
-
-          {/* Template Selector */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Website Template
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {(Object.values(TEMPLATE_CONFIGS) as { name: TemplateName; displayName: string; description: string }[])
-                .filter(t => t.name !== 'daxa')
-                .map((template) => (
-                <button
-                  key={template.name}
-                  type="button"
-                  onClick={() => {
-                    setFormData(prev => ({ ...prev, template: template.name }))
-                    setSaved(false)
-                  }}
-                  className={`p-3 rounded-lg border-2 text-left transition-colors ${
-                    formData.template === template.name
-                      ? 'border-orange-500 bg-orange-50'
-                      : 'border-gray-200 hover:border-orange-300'
-                  }`}
-                >
-                  <p className="font-medium text-sm text-gray-900">{template.displayName}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{template.description}</p>
-                </button>
-              ))}
             </div>
           </div>
 
