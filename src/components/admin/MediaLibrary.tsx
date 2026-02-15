@@ -243,13 +243,16 @@ export default function MediaLibrary({ initialMedia }: MediaLibraryProps) {
                     onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                   />
-                  <textarea
-                    placeholder="Description"
-                    value={editForm.description || ''}
-                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
-                    rows={2}
-                  />
+                  <div>
+                    <textarea
+                      placeholder="e.g. Kitchen extension nearly finished, just fitting the worktops"
+                      value={editForm.description || ''}
+                      onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
+                      rows={2}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">This guides the AI caption - describe what&apos;s in the photo</p>
+                  </div>
                   <input
                     type="text"
                     placeholder="Location"
