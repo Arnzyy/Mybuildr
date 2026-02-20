@@ -176,19 +176,32 @@ async function updateReviewAfterScheduling(reviewId: string): Promise<void> {
 async function shouldPostReview(companyId: string, frequency: number = 3): Promise<boolean> {
   const supabase = createAdminClient()
 
-  // Count recent posts to determine if we should post a review
+  // Get recent posts to find when the last review was posted
   const { data: recentPosts } = await supabase
     .from('scheduled_posts')
     .select('review_id')
     .eq('company_id', companyId)
     .order('created_at', { ascending: false })
-    .limit(frequency)
+    .limit(20) // Get enough posts to find the pattern
 
-  if (!recentPosts || recentPosts.length === 0) return false
+  if (!recentPosts || recentPosts.length === 0) {
+    // No posts yet - don't start with a review, start with an image
+    return false
+  }
 
-  // If last (frequency - 1) posts were images (no review_id), next should be a review
-  const recentReviewCount = recentPosts.filter(p => p.review_id).length
-  return recentReviewCount === 0 && recentPosts.length >= (frequency - 1)
+  // Count how many image posts since the last review
+  let imagesSinceLastReview = 0
+  for (const post of recentPosts) {
+    if (post.review_id) {
+      // Found a review, stop counting
+      break
+    }
+    imagesSinceLastReview++
+  }
+
+  // If we've posted (frequency - 1) images since the last review, time for another review
+  // e.g., frequency=3 means: image, image, REVIEW, image, image, REVIEW
+  return imagesSinceLastReview >= (frequency - 1)
 }
 
 // Schedule a specific media item immediately (called on upload)
