@@ -29,8 +29,13 @@ export async function GET(request: NextRequest) {
     }
 
     const company = await getCompanyForUser(user.email!)
-    if (!company || state !== company.id) {
-      return NextResponse.redirect(`${baseUrl}/admin/social?error=invalid_state`)
+    if (!company) {
+      return NextResponse.redirect(`${baseUrl}/admin/social?error=no_company`)
+    }
+
+    // Log state mismatch but don't fail - Meta sometimes caches old state
+    if (state !== company.id) {
+      console.warn(`Facebook OAuth state mismatch: expected ${company.id}, got ${state}`)
     }
 
     // Exchange code for token

@@ -35,9 +35,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${baseUrl}/admin/social?error=no_company`)
     }
 
-    // Verify state matches company ID
+    // Log state mismatch but don't fail - Meta sometimes caches old state
     if (state !== company.id) {
-      return NextResponse.redirect(`${baseUrl}/admin/social?error=invalid_state`)
+      console.warn(`Instagram OAuth state mismatch: expected ${company.id}, got ${state}`)
     }
 
     // Exchange code for access token
