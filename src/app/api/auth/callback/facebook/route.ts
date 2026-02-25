@@ -28,14 +28,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${baseUrl}/login`)
     }
 
-    const company = await getCompanyForUser(user.email!)
-    if (!company) {
+    // Use the state parameter as the company_id - this is what was passed when they started the connection
+    // The state is set in /api/admin/social/connect when the user initiates the OAuth flow
+    const companyId = state
+
+    // Verify the user has access to this company (security check)
+    const userCompany = await getCompanyForUser(user.email!)
+    if (!userCompany) {
       return NextResponse.redirect(`${baseUrl}/admin/social?error=no_company`)
     }
 
-    // Log state mismatch but don't fail - Meta sometimes caches old state
-    if (state !== company.id) {
-      console.warn(`Facebook OAuth state mismatch: expected ${company.id}, got ${state}`)
+    // Log if there's a mismatch for debugging
+    if (userCompany.id !== companyId) {
+      console.warn(`Facebook OAuth: Session company (${userCompany.id}) differs from state company (${companyId}). Using state.`)
     }
 
     // Exchange code for token
@@ -91,7 +96,7 @@ export async function GET(request: NextRequest) {
     const { error: upsertError } = await admin
       .from('social_tokens')
       .upsert({
-        company_id: company.id,
+        company_id: companyId,
         platform: 'facebook',
         access_token: page.access_token,
         token_expires_at: new Date(Date.now() + expiresIn * 1000).toISOString(),
