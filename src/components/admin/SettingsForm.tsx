@@ -165,14 +165,28 @@ export default function SettingsForm({ company }: SettingsFormProps) {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Trade Type
             </label>
-            <input
-              type="text"
+            <select
               name="trade_type"
               value={formData.trade_type}
               onChange={handleChange}
-              placeholder="e.g. Builder, Electrician, Plumber"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-            />
+            >
+              <option value="">Select a trade type...</option>
+              <option value="Electrician">Electrician</option>
+              <option value="Plumber">Plumber</option>
+              <option value="Builder">Builder</option>
+              <option value="Carpenter">Carpenter</option>
+              <option value="Gas Engineer">Gas Engineer</option>
+              <option value="Roofer">Roofer</option>
+              <option value="Plasterer">Plasterer</option>
+              <option value="Painter & Decorator">Painter & Decorator</option>
+              <option value="Locksmith">Locksmith</option>
+              <option value="Joinery">Joinery</option>
+              <option value="Tiler">Tiler</option>
+              <option value="HVAC/Air Conditioning">HVAC/Air Conditioning</option>
+              <option value="Drainage">Drainage</option>
+              <option value="Other">Other (custom)</option>
+            </select>
           </div>
 
           <div className="md:col-span-2">
