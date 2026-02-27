@@ -58,7 +58,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-gray-800 pt-8 text-center text-sm text-gray-400">
-          <p>© {new Date().getFullYear()} {SITE_CONFIG.name}. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} {SITE_CONFIG.name}. All rights reserved. <a href="https://bytrade.co.uk/privacy" className="hover:text-white">Privacy Policy</a></p>
         </div>
       </div>
     </footer>

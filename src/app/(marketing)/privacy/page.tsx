@@ -112,7 +112,7 @@ export default function PrivacyPage() {
               please contact us at:
             </p>
             <p className="mt-2">
-              <strong>Email:</strong> hello@bytrade.uk
+              <strong>Email:</strong> hello@bytrade.co.uk
             </p>
           </section>
 
