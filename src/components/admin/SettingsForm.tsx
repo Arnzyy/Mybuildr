@@ -13,7 +13,12 @@ import {
   Sparkles,
   Upload,
   X,
-  Loader2
+  Loader2,
+  Lock,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  XCircle
 } from 'lucide-react'
 
 interface SettingsFormProps {
@@ -27,6 +32,65 @@ export default function SettingsForm({ company }: SettingsFormProps) {
   const [heroImageUrl, setHeroImageUrl] = useState(company.hero_image_url || '')
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [uploadingHero, setUploadingHero] = useState(false)
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+
+  const validatePassword = (password: string) => {
+    const hasUppercase = /[A-Z]/.test(password)
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    const hasMinLength = password.length >= 8
+    return { hasUppercase, hasSpecialChar, hasMinLength, isValid: hasUppercase && hasSpecialChar && hasMinLength }
+  }
+
+  const passwordValidation = validatePassword(passwordData.newPassword)
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPasswordMessage(null)
+
+    if (!passwordValidation.isValid) {
+      setPasswordMessage({ type: 'error', text: 'Password does not meet requirements' })
+      return
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordMessage({ type: 'error', text: 'Passwords do not match' })
+      return
+    }
+
+    setPasswordLoading(true)
+    try {
+      const res = await fetch('/api/admin/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword
+        })
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        setPasswordMessage({ type: 'success', text: 'Password changed successfully' })
+        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
+      } else {
+        setPasswordMessage({ type: 'error', text: data.error || 'Failed to change password' })
+      }
+    } catch {
+      setPasswordMessage({ type: 'error', text: 'Failed to change password' })
+    } finally {
+      setPasswordLoading(false)
+    }
+  }
   const [formData, setFormData] = useState({
     name: company.name,
     email: company.email,
@@ -185,6 +249,7 @@ export default function SettingsForm({ company }: SettingsFormProps) {
               <option value="Tiler">Tiler</option>
               <option value="HVAC/Air Conditioning">HVAC/Air Conditioning</option>
               <option value="Drainage">Drainage</option>
+              <option value="Scaffolding">Scaffolding</option>
               <option value="Other">Other (custom)</option>
             </select>
           </div>
@@ -821,6 +886,116 @@ export default function SettingsForm({ company }: SettingsFormProps) {
             </div>
           </div>
         </div>
+      </SettingsSection>
+
+      {/* Account Security */}
+      <SettingsSection
+        title="Account Security"
+        icon={<Lock className="w-5 h-5" />}
+        defaultOpen={false}
+      >
+        <form onSubmit={handlePasswordChange} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Current Password
+            </label>
+            <div className="relative">
+              <input
+                type={showCurrentPassword ? 'text' : 'password'}
+                value={passwordData.currentPassword}
+                onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pr-12"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              New Password
+            </label>
+            <div className="relative">
+              <input
+                type={showNewPassword ? 'text' : 'password'}
+                value={passwordData.newPassword}
+                onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pr-12"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+
+            {/* Password Requirements */}
+            {passwordData.newPassword && (
+              <div className="mt-3 space-y-1">
+                <div className={`flex items-center gap-2 text-sm ${passwordValidation.hasMinLength ? 'text-green-600' : 'text-gray-500'}`}>
+                  {passwordValidation.hasMinLength ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                  At least 8 characters
+                </div>
+                <div className={`flex items-center gap-2 text-sm ${passwordValidation.hasUppercase ? 'text-green-600' : 'text-gray-500'}`}>
+                  {passwordValidation.hasUppercase ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                  At least 1 uppercase letter
+                </div>
+                <div className={`flex items-center gap-2 text-sm ${passwordValidation.hasSpecialChar ? 'text-green-600' : 'text-gray-500'}`}>
+                  {passwordValidation.hasSpecialChar ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                  At least 1 special character (!@#$%^&* etc.)
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Confirm New Password
+            </label>
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={passwordData.confirmPassword}
+                onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pr-12"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+            {passwordData.confirmPassword && passwordData.newPassword !== passwordData.confirmPassword && (
+              <p className="mt-1 text-sm text-red-500">Passwords do not match</p>
+            )}
+          </div>
+
+          {passwordMessage && (
+            <div className={`p-3 rounded-lg ${passwordMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+              {passwordMessage.text}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={passwordLoading || !passwordValidation.isValid || passwordData.newPassword !== passwordData.confirmPassword}
+            className="px-6 py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {passwordLoading ? 'Changing Password...' : 'Change Password'}
+          </button>
+        </form>
       </SettingsSection>
 
       {/* Submit */}
