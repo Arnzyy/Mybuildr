@@ -124,6 +124,8 @@ export default function SettingsForm({ company }: SettingsFormProps) {
     review_posting_enabled: company.review_posting_enabled ?? true,
     review_min_rating: company.review_min_rating ?? 4,
     review_post_frequency: company.review_post_frequency ?? 3,
+    // Site Publishing
+    is_published: company.is_published ?? false,
   })
 
   const uploadImage = useCallback(async (file: File): Promise<string | null> => {
@@ -739,6 +741,37 @@ export default function SettingsForm({ company }: SettingsFormProps) {
         defaultOpen={true}
       >
         <div className="space-y-6">
+          {/* Publish Site Toggle */}
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
+            <div>
+              <p className="font-medium text-gray-900">
+                {formData.is_published ? 'Site Published' : 'Site Draft (Not Public)'}
+              </p>
+              <p className="text-sm text-gray-500">
+                {formData.is_published
+                  ? 'Your site is live and visible to the public'
+                  : 'Your site is hidden from the public - only you can preview it'
+                }
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setFormData(prev => ({ ...prev, is_published: !prev.is_published }))
+                setSaved(false)
+              }}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                formData.is_published ? 'bg-green-500' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  formData.is_published ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
           {/* Hero Image */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
