@@ -91,7 +91,7 @@ export default function AdminHeader({ company }: AdminHeaderProps) {
 
           {/* View live site */}
           <a
-            href={company.custom_domain ? `https://${company.custom_domain}` : `https://${company.slug}.bytrade.co.uk`}
+            href={company.custom_domain ? `https://${company.custom_domain}` : `https://bytrade.co.uk/sites/${company.slug}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100"

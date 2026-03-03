@@ -122,7 +122,7 @@ export default function AdminSidebar({ company }: AdminSidebarProps) {
       {/* View site link & Logout */}
       <div className="p-4 border-t border-gray-800 space-y-3">
         <a
-          href={company.custom_domain ? `https://${company.custom_domain}` : `https://${company.slug}.bytrade.co.uk`}
+          href={company.custom_domain ? `https://${company.custom_domain}` : `https://bytrade.co.uk/sites/${company.slug}`}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
