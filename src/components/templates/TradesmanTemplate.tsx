@@ -22,11 +22,11 @@ function TrustBadges({ company }: { company: Company }) {
   return (
     <section className="py-8 bg-gray-100">
       <div className="max-w-6xl mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {badges.map((badge) => (
-            <div key={badge.text} className="flex items-center gap-3 justify-center">
+            <div key={badge.text} className="flex flex-col items-center text-center gap-2">
               <badge.icon
-                className="w-8 h-8"
+                className="w-8 h-8 flex-shrink-0"
                 style={{ color: company.primary_color }}
               />
               <span className="text-sm font-medium text-gray-700">{badge.text}</span>
