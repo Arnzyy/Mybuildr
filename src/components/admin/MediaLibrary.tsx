@@ -6,7 +6,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import {
   Trash2,
-  Upload,
   X,
   Check,
   Edit2,
@@ -14,11 +13,19 @@ import {
   MapPin,
   Calendar,
   BarChart,
-  FolderOpen
+  FolderOpen,
+  Loader2
 } from 'lucide-react'
 
 interface MediaLibraryProps {
   initialMedia: MediaItem[]
+}
+
+interface PendingUpload {
+  file: File
+  preview: string
+  description: string
+  location: string
 }
 
 export default function MediaLibrary({ initialMedia }: MediaLibraryProps) {
@@ -28,17 +35,58 @@ export default function MediaLibrary({ initialMedia }: MediaLibraryProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<Partial<MediaItem>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([])
+  const [showUploadModal, setShowUploadModal] = useState(false)
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
 
+    // Create pending uploads with previews
+    const newPending: PendingUpload[] = []
+    for (const file of Array.from(files)) {
+      const preview = URL.createObjectURL(file)
+      newPending.push({
+        file,
+        preview,
+        description: '',
+        location: ''
+      })
+    }
+
+    setPendingUploads(newPending)
+    setShowUploadModal(true)
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const updatePendingUpload = (index: number, field: 'description' | 'location', value: string) => {
+    setPendingUploads(prev => prev.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    ))
+  }
+
+  const removePendingUpload = (index: number) => {
+    setPendingUploads(prev => {
+      const updated = prev.filter((_, i) => i !== index)
+      if (updated.length === 0) {
+        setShowUploadModal(false)
+      }
+      return updated
+    })
+  }
+
+  const submitUploads = async () => {
     setUploading(true)
 
-    for (const file of Array.from(files)) {
+    for (const pending of pendingUploads) {
       try {
         const formData = new FormData()
-        formData.append('file', file)
+        formData.append('file', pending.file)
+        formData.append('description', pending.description)
+        formData.append('location', pending.location)
 
         const res = await fetch('/api/admin/media/upload', {
           method: 'POST',
@@ -55,12 +103,20 @@ export default function MediaLibrary({ initialMedia }: MediaLibraryProps) {
       } catch {
         alert('Failed to upload image')
       }
+      // Clean up preview URL
+      URL.revokeObjectURL(pending.preview)
     }
 
     setUploading(false)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
+    setPendingUploads([])
+    setShowUploadModal(false)
+  }
+
+  const cancelUploads = () => {
+    // Clean up preview URLs
+    pendingUploads.forEach(p => URL.revokeObjectURL(p.preview))
+    setPendingUploads([])
+    setShowUploadModal(false)
   }
 
   const handleDelete = async (id: string) => {
@@ -352,6 +408,98 @@ export default function MediaLibrary({ initialMedia }: MediaLibraryProps) {
         <p className="text-sm text-gray-500 text-center mt-6">
           Images are automatically rotated for social posts. Least-posted images are used first.
         </p>
+      )}
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Add Details to Your Images
+              </h2>
+              <button
+                onClick={cancelUploads}
+                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {pendingUploads.map((pending, index) => (
+                <div key={index} className="bg-gray-50 rounded-lg p-4 flex gap-4">
+                  <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden">
+                    <Image
+                      src={pending.preview}
+                      alt="Preview"
+                      fill
+                      className="object-cover"
+                    />
+                    <button
+                      onClick={() => removePendingUpload(index)}
+                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Description
+                      </label>
+                      <textarea
+                        value={pending.description}
+                        onChange={(e) => updatePendingUpload(index, 'description', e.target.value)}
+                        placeholder="e.g. Kitchen extension nearly finished, just fitting the worktops"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
+                        rows={2}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        This guides the AI caption - describe what&apos;s in the photo
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Location (optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={pending.location}
+                        onChange={(e) => updatePendingUpload(index, 'location', e.target.value)}
+                        placeholder="e.g. Bristol"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-4 border-t border-gray-200 flex gap-3">
+              <button
+                onClick={cancelUploads}
+                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitUploads}
+                disabled={uploading}
+                className="flex-1 py-3 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  `Upload ${pendingUploads.length} Image${pendingUploads.length > 1 ? 's' : ''}`
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
