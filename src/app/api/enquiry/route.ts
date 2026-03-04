@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { resend, FROM_EMAIL } from '@/lib/email/client'
+import { getResendClient, FROM_EMAIL } from '@/lib/email/client'
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,7 +36,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Send notification email to company
-    if (company?.email && process.env.RESEND_API_KEY) {
+    const resend = getResendClient()
+    if (company?.email && resend) {
       try {
         await resend.emails.send({
           from: FROM_EMAIL,
