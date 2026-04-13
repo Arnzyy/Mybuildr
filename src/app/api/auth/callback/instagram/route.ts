@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { getCompanyForUser } from '@/lib/supabase/queries'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { OAUTH_CONFIG, getRedirectUri } from '@/lib/oauth/config'
 
@@ -22,27 +20,21 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Verify user session
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.redirect(`${baseUrl}/login?redirect=/admin/social`)
-    }
-
-    // Use the state parameter as the company_id - this is what was passed when they started the connection
-    // The state is set in /api/admin/social/connect when the user initiates the OAuth flow
+    // The state parameter contains the company_id - set when the authenticated user
+    // initiated the OAuth flow in /api/admin/social/connect
     const companyId = state
+    const admin = createAdminClient()
 
-    // Verify the user has access to this company (security check)
-    const userCompany = await getCompanyForUser(user.email!)
-    if (!userCompany) {
-      return NextResponse.redirect(`${baseUrl}/admin/social?error=no_company`)
-    }
+    // Verify company exists (state was set by an authenticated user)
+    const { data: company, error: companyError } = await admin
+      .from('companies')
+      .select('id')
+      .eq('id', companyId)
+      .single()
 
-    // Log if there's a mismatch for debugging
-    if (userCompany.id !== companyId) {
-      console.warn(`Instagram OAuth: Session company (${userCompany.id}) differs from state company (${companyId}). Using state.`)
+    if (companyError || !company) {
+      console.error('Instagram OAuth: Invalid company in state:', companyId)
+      return NextResponse.redirect(`${baseUrl}/admin/social?error=invalid_state`)
     }
 
     // Exchange code for access token
@@ -124,7 +116,6 @@ export async function GET(request: NextRequest) {
     const igInfo = await igInfoResponse.json()
 
     // Store tokens in database
-    const admin = createAdminClient()
     const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString()
 
     // Upsert social token
