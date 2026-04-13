@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
 import Link from 'next/link'
-import { Calendar, Check, X, AlertCircle, Edit2, Trash2, ChevronUp, ChevronDown, Layers } from 'lucide-react'
+import { Calendar, Check, X, AlertCircle, Edit2, Trash2, ChevronUp, ChevronDown, Layers, Send, Loader2 } from 'lucide-react'
 import MediaPreview from './MediaPreview'
 
 interface Post {
@@ -32,6 +32,7 @@ export default function PostsList({ initialPosts }: PostsListProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editCaption, setEditCaption] = useState('')
   const [editHashtags, setEditHashtags] = useState('')
+  const [postingNowId, setPostingNowId] = useState<string | null>(null)
 
   // Filter posts on client side
   const posts = useMemo(() => {
@@ -56,6 +57,31 @@ export default function PostsList({ initialPosts }: PostsListProps) {
       }
     } catch {
       alert('Failed to delete post')
+    }
+  }
+
+  const handlePostNow = async (id: string) => {
+    if (!confirm('Post this to Instagram & Facebook now?')) return
+
+    setPostingNowId(id)
+
+    try {
+      const res = await fetch(`/api/admin/posts/${id}/post-now`, {
+        method: 'POST',
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        alert(data.message || 'Posted successfully!')
+        router.refresh()
+      } else {
+        alert(data.error || 'Failed to post')
+      }
+    } catch {
+      alert('Failed to post')
+    } finally {
+      setPostingNowId(null)
     }
   }
 
@@ -197,6 +223,25 @@ export default function PostsList({ initialPosts }: PostsListProps) {
 
                 {post.status === 'pending' && (
                   <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handlePostNow(post.id)}
+                      disabled={postingNowId === post.id}
+                      className="px-3 py-1.5 bg-green-500 text-white text-xs font-medium rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                      title="Post Now"
+                    >
+                      {postingNowId === post.id ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          Posting...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-3.5 h-3.5" />
+                          Post Now
+                        </>
+                      )}
+                    </button>
                     <div className="flex flex-col gap-1">
                       <button
                         type="button"
