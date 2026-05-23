@@ -5,6 +5,7 @@ import { format } from 'date-fns'
 import type { Review } from '@/lib/supabase/types'
 import { Star, Edit, Trash2, Image, Share2, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { useToast } from '@/components/ui/Toast'
 
 interface ReviewsListProps {
   reviews: Review[]
@@ -21,6 +22,7 @@ export default function ReviewsList({
   const [loadingGraphic, setLoadingGraphic] = useState<string | null>(null)
   const [loadingPost, setLoadingPost] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const { success, error } = useToast()
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this review?')) return
@@ -33,12 +35,13 @@ export default function ReviewsList({
       })
 
       if (res.ok) {
+        success('Review deleted')
         setReviews(reviews.filter(r => r.id !== id))
       } else {
-        alert('Failed to delete review')
+        error('Failed to delete review')
       }
     } catch {
-      alert('Failed to delete review')
+      error('Failed to delete review')
     } finally {
       setDeleting(null)
     }
@@ -55,14 +58,15 @@ export default function ReviewsList({
       const data = await res.json()
 
       if (res.ok) {
+        success('Graphic generated')
         setReviews(reviews.map(r =>
           r.id === id ? { ...r, graphic_url: data.graphicUrl } : r
         ))
       } else {
-        alert(data.error || 'Failed to generate graphic')
+        error(data.error || 'Failed to generate graphic')
       }
     } catch {
-      alert('Failed to generate graphic')
+      error('Failed to generate graphic')
     } finally {
       setLoadingGraphic(null)
     }
@@ -79,15 +83,15 @@ export default function ReviewsList({
       const data = await res.json()
 
       if (res.ok) {
-        alert('Review scheduled for posting!')
+        success('Review scheduled for posting!')
         setReviews(reviews.map(r =>
           r.id === id ? { ...r, used_in_post: true } : r
         ))
       } else {
-        alert(data.error || 'Failed to schedule post')
+        error(data.error || 'Failed to schedule post')
       }
     } catch {
-      alert('Failed to schedule post')
+      error('Failed to schedule post')
     } finally {
       setLoadingPost(null)
     }

@@ -6,6 +6,7 @@ import { format } from 'date-fns'
 import Link from 'next/link'
 import { Calendar, Check, X, AlertCircle, Edit2, Trash2, ChevronUp, ChevronDown, Layers, Send, Loader2 } from 'lucide-react'
 import MediaPreview from './MediaPreview'
+import { useToast } from '@/components/ui/Toast'
 
 interface Post {
   id: string
@@ -28,6 +29,7 @@ export default function PostsList({ initialPosts }: PostsListProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const statusFilter = searchParams.get('status') || 'pending'
+  const { success, error } = useToast()
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editCaption, setEditCaption] = useState('')
@@ -51,12 +53,13 @@ export default function PostsList({ initialPosts }: PostsListProps) {
       })
 
       if (res.ok) {
+        success('Post deleted')
         router.refresh()
       } else {
-        alert('Failed to delete post')
+        error('Failed to delete post')
       }
     } catch {
-      alert('Failed to delete post')
+      error('Failed to delete post')
     }
   }
 
@@ -73,13 +76,13 @@ export default function PostsList({ initialPosts }: PostsListProps) {
       const data = await res.json()
 
       if (res.ok) {
-        alert(data.message || 'Posted successfully!')
+        success(data.message || 'Posted successfully!')
         router.refresh()
       } else {
-        alert(data.error || 'Failed to post')
+        error(data.error || 'Failed to post')
       }
     } catch {
-      alert('Failed to post')
+      error('Failed to post')
     } finally {
       setPostingNowId(null)
     }
@@ -105,13 +108,14 @@ export default function PostsList({ initialPosts }: PostsListProps) {
       })
 
       if (res.ok) {
+        success('Changes saved')
         setEditingId(null)
         router.refresh()
       } else {
-        alert('Failed to save changes')
+        error('Failed to save changes')
       }
     } catch {
-      alert('Failed to save changes')
+      error('Failed to save changes')
     }
   }
 
@@ -136,15 +140,14 @@ export default function PostsList({ initialPosts }: PostsListProps) {
       })
 
       if (res.ok) {
-        // Refresh the page to show updated order
         router.refresh()
       } else {
         const data = await res.json()
-        alert(data.error || 'Failed to reorder posts')
+        error(data.error || 'Failed to reorder posts')
       }
-    } catch (error) {
-      console.error('Reorder error:', error)
-      alert('Failed to reorder posts. Please try again.')
+    } catch (err) {
+      console.error('Reorder error:', err)
+      error('Failed to reorder posts')
     }
   }
 

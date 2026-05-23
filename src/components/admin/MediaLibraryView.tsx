@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { FolderOpen, Image as ImageIcon, Edit, Trash2, Layers } from 'lucide-react'
-import { format } from 'date-fns'
 import type { Project, MediaItem } from '@/lib/supabase/types'
+import { useToast } from '@/components/ui/Toast'
 
 interface MediaLibraryViewProps {
   projects: Project[]
@@ -15,9 +15,9 @@ const INITIAL_LIMIT = 5
 
 export default function MediaLibraryView({ projects, individualImages }: MediaLibraryViewProps) {
   const router = useRouter()
-  const [selectedProject, setSelectedProject] = useState<string | null>(null)
   const [showAllProjects, setShowAllProjects] = useState(false)
   const [showAllImages, setShowAllImages] = useState(false)
+  const { success, error } = useToast()
 
   const visibleProjects = showAllProjects ? projects : projects.slice(0, INITIAL_LIMIT)
   const visibleImages = showAllImages ? individualImages : individualImages.slice(0, INITIAL_LIMIT)
@@ -29,9 +29,10 @@ export default function MediaLibraryView({ projects, individualImages }: MediaLi
     const res = await fetch(endpoint, { method: 'DELETE' })
 
     if (res.ok) {
+      success(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted`)
       router.refresh()
     } else {
-      alert(`Failed to delete ${type}`)
+      error(`Failed to delete ${type}`)
     }
   }
 

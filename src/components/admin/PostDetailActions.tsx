@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Edit2, Trash2, Save, X } from 'lucide-react'
 import { format } from 'date-fns'
+import { useToast } from '@/components/ui/Toast'
 
 interface PostDetailActionsProps {
   post: {
@@ -17,6 +18,7 @@ interface PostDetailActionsProps {
 
 export default function PostDetailActions({ post }: PostDetailActionsProps) {
   const router = useRouter()
+  const { success, error } = useToast()
   const [isEditing, setIsEditing] = useState(false)
   const [scheduledFor, setScheduledFor] = useState(
     format(new Date(post.scheduled_for), "yyyy-MM-dd'T'HH:mm")
@@ -34,12 +36,13 @@ export default function PostDetailActions({ post }: PostDetailActionsProps) {
       })
 
       if (res.ok) {
+        success('Post deleted')
         router.push('/admin/posts')
       } else {
-        alert('Failed to delete post')
+        error('Failed to delete post')
       }
     } catch {
-      alert('Failed to delete post')
+      error('Failed to delete post')
     }
   }
 
@@ -57,13 +60,14 @@ export default function PostDetailActions({ post }: PostDetailActionsProps) {
       })
 
       if (res.ok) {
+        success('Changes saved')
         setIsEditing(false)
         router.refresh()
       } else {
-        alert('Failed to save changes')
+        error('Failed to save changes')
       }
     } catch {
-      alert('Failed to save changes')
+      error('Failed to save changes')
     } finally {
       setSaving(false)
     }

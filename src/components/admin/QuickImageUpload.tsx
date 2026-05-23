@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react'
 import Image from 'next/image'
+import { useToast } from '@/components/ui/Toast'
 
 interface PendingUpload {
   file: File
@@ -18,6 +19,7 @@ export default function QuickImageUpload({ variant = 'button' }: { variant?: 'bu
   const [showModal, setShowModal] = useState(false)
   const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { success, error } = useToast()
 
   const handleFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -96,12 +98,13 @@ export default function QuickImageUpload({ variant = 'button' }: { variant?: 'bu
         URL.revokeObjectURL(pending.preview)
       }
 
+      success('Images uploaded')
       setShowModal(false)
       setPendingUploads([])
       router.refresh()
-    } catch (error) {
-      console.error('Upload error:', error)
-      alert(error instanceof Error ? error.message : 'Upload failed')
+    } catch (err) {
+      console.error('Upload error:', err)
+      error(err instanceof Error ? err.message : 'Upload failed')
     } finally {
       setUploading(false)
     }

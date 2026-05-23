@@ -16,6 +16,7 @@ import {
   FolderOpen,
   Loader2
 } from 'lucide-react'
+import { useToast } from '@/components/ui/Toast'
 
 interface MediaLibraryProps {
   initialMedia: MediaItem[]
@@ -37,6 +38,7 @@ export default function MediaLibrary({ initialMedia }: MediaLibraryProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([])
   const [showUploadModal, setShowUploadModal] = useState(false)
+  const { success, error } = useToast()
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -97,11 +99,11 @@ export default function MediaLibrary({ initialMedia }: MediaLibraryProps) {
           const { media: newMedia } = await res.json()
           setMedia(prev => [newMedia, ...prev])
         } else {
-          const { error } = await res.json()
-          alert(error || 'Failed to upload image')
+          const data = await res.json()
+          error(data.error || 'Failed to upload image')
         }
       } catch {
-        alert('Failed to upload image')
+        error('Failed to upload image')
       }
       // Clean up preview URL
       URL.revokeObjectURL(pending.preview)
@@ -132,12 +134,13 @@ export default function MediaLibrary({ initialMedia }: MediaLibraryProps) {
       })
 
       if (res.ok) {
+        success('Image deleted')
         setMedia(media.filter(m => m.id !== id))
       } else {
-        alert('Failed to delete image')
+        error('Failed to delete image')
       }
     } catch {
-      alert('Failed to delete image')
+      error('Failed to delete image')
     } finally {
       setDeleting(null)
     }
@@ -169,13 +172,14 @@ export default function MediaLibrary({ initialMedia }: MediaLibraryProps) {
       if (res.ok) {
         const { media: updated } = await res.json()
         setMedia(media.map(m => m.id === id ? updated : m))
+        success('Changes saved')
         setEditingId(null)
         setEditForm({})
       } else {
-        alert('Failed to update image')
+        error('Failed to update image')
       }
     } catch {
-      alert('Failed to update image')
+      error('Failed to update image')
     }
   }
 

@@ -5,6 +5,7 @@ import { Project } from '@/lib/supabase/types'
 import Link from 'next/link'
 import Image from 'next/image'
 import { GripVertical, Edit, Trash2, Image as ImageIcon } from 'lucide-react'
+import { useToast } from '@/components/ui/Toast'
 
 interface ProjectsListProps {
   initialProjects: Project[]
@@ -13,6 +14,7 @@ interface ProjectsListProps {
 export default function ProjectsList({ initialProjects }: ProjectsListProps) {
   const [projects, setProjects] = useState(initialProjects)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const { success, error } = useToast()
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this project? This cannot be undone.')) {
@@ -27,12 +29,13 @@ export default function ProjectsList({ initialProjects }: ProjectsListProps) {
       })
 
       if (res.ok) {
+        success('Project deleted')
         setProjects(projects.filter(p => p.id !== id))
       } else {
-        alert('Failed to delete project')
+        error('Failed to delete project')
       }
     } catch {
-      alert('Failed to delete project')
+      error('Failed to delete project')
     } finally {
       setDeleting(null)
     }

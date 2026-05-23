@@ -3,6 +3,7 @@ import { getCompanyForUser } from '@/lib/supabase/queries'
 import { redirect } from 'next/navigation'
 import AdminSidebar from '@/components/admin/AdminSidebar'
 import AdminHeader from '@/components/admin/AdminHeader'
+import AdminProviders from '@/components/admin/AdminProviders'
 
 export default async function AdminLayout({
   children,
@@ -40,19 +41,21 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Mobile header */}
-      <AdminHeader company={company} user={user} />
+    <AdminProviders>
+      <div className="min-h-screen bg-gray-100">
+        {/* Mobile header */}
+        <AdminHeader company={company} user={user} />
 
-      <div className="flex">
-        {/* Sidebar - hidden on mobile */}
-        <AdminSidebar company={company} />
+        <div className="flex">
+          {/* Sidebar - hidden on mobile */}
+          <AdminSidebar company={company} />
 
-        {/* Main content */}
-        <main className="flex-1 p-4 md:p-8 md:ml-64">
-          {children}
-        </main>
+          {/* Main content */}
+          <main className="flex-1 p-4 md:p-8 md:ml-64">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </AdminProviders>
   )
 }

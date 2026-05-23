@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, isSameDay } from 'date-fns'
 import { Calendar, Check, X, AlertCircle, Edit2, Trash2, Layers } from 'lucide-react'
 import MediaPreview from './MediaPreview'
+import { useToast } from '@/components/ui/Toast'
 
 interface Post {
   id: string
@@ -27,6 +28,7 @@ export default function PostsTimeline({ initialPosts }: PostsTimelineProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const statusFilter = searchParams.get('status') || 'pending'
+  const { success, error } = useToast()
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editCaption, setEditCaption] = useState('')
@@ -49,12 +51,14 @@ export default function PostsTimeline({ initialPosts }: PostsTimelineProps) {
       })
 
       if (res.ok) {
+        success('Post deleted')
         router.refresh()
       } else {
-        alert('Failed to delete post')
+        const data = await res.json().catch(() => ({}))
+        error(data.error || 'Failed to delete post')
       }
     } catch {
-      alert('Failed to delete post')
+      error('Failed to delete post')
     }
   }
 
@@ -78,13 +82,14 @@ export default function PostsTimeline({ initialPosts }: PostsTimelineProps) {
       })
 
       if (res.ok) {
+        success('Changes saved')
         setEditingId(null)
         router.refresh()
       } else {
-        alert('Failed to save changes')
+        error('Failed to save changes')
       }
     } catch {
-      alert('Failed to save changes')
+      error('Failed to save changes')
     }
   }
 
