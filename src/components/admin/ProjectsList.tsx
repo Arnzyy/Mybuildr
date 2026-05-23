@@ -14,10 +14,10 @@ interface ProjectsListProps {
 export default function ProjectsList({ initialProjects }: ProjectsListProps) {
   const [projects, setProjects] = useState(initialProjects)
   const [deleting, setDeleting] = useState<string | null>(null)
-  const { success, error } = useToast()
+  const { success, error, confirm } = useToast()
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this project? This cannot be undone.')) {
+    if (!(await confirm('Are you sure you want to delete this project? This cannot be undone.'))) {
       return
     }
 

@@ -38,7 +38,7 @@ export default function MediaLibrary({ initialMedia }: MediaLibraryProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([])
   const [showUploadModal, setShowUploadModal] = useState(false)
-  const { success, error } = useToast()
+  const { success, error, confirm } = useToast()
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -122,7 +122,7 @@ export default function MediaLibrary({ initialMedia }: MediaLibraryProps) {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this image? This cannot be undone.')) {
+    if (!(await confirm('Are you sure you want to delete this image? This cannot be undone.'))) {
       return
     }
 

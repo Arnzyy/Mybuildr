@@ -22,10 +22,10 @@ export default function ReviewsList({
   const [loadingGraphic, setLoadingGraphic] = useState<string | null>(null)
   const [loadingPost, setLoadingPost] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
-  const { success, error } = useToast()
+  const { success, error, confirm } = useToast()
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this review?')) return
+    if (!(await confirm('Delete this review?'))) return
 
     setDeleting(id)
 

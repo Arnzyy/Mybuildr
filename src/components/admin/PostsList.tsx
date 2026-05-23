@@ -29,7 +29,7 @@ export default function PostsList({ initialPosts }: PostsListProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const statusFilter = searchParams.get('status') || 'pending'
-  const { success, error } = useToast()
+  const { success, error, confirm } = useToast()
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editCaption, setEditCaption] = useState('')
@@ -45,7 +45,7 @@ export default function PostsList({ initialPosts }: PostsListProps) {
   }, [initialPosts, statusFilter])
 
   const handleCancel = async (id: string) => {
-    if (!confirm('Delete this scheduled post?')) return
+    if (!(await confirm('Delete this scheduled post?'))) return
 
     try {
       const res = await fetch(`/api/admin/posts/${id}`, {
@@ -64,7 +64,7 @@ export default function PostsList({ initialPosts }: PostsListProps) {
   }
 
   const handlePostNow = async (id: string) => {
-    if (!confirm('Post this to Instagram & Facebook now?')) return
+    if (!(await confirm('Post this to Instagram & Facebook now?'))) return
 
     setPostingNowId(id)
 

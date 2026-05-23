@@ -18,7 +18,7 @@ interface PostDetailActionsProps {
 
 export default function PostDetailActions({ post }: PostDetailActionsProps) {
   const router = useRouter()
-  const { success, error } = useToast()
+  const { success, error, confirm } = useToast()
   const [isEditing, setIsEditing] = useState(false)
   const [scheduledFor, setScheduledFor] = useState(
     format(new Date(post.scheduled_for), "yyyy-MM-dd'T'HH:mm")
@@ -28,7 +28,7 @@ export default function PostDetailActions({ post }: PostDetailActionsProps) {
   const [saving, setSaving] = useState(false)
 
   const handleDelete = async () => {
-    if (!confirm('Delete this post?')) return
+    if (!(await confirm('Delete this post?'))) return
 
     try {
       const res = await fetch(`/api/admin/posts/${post.id}`, {

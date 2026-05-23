@@ -17,13 +17,13 @@ export default function MediaLibraryView({ projects, individualImages }: MediaLi
   const router = useRouter()
   const [showAllProjects, setShowAllProjects] = useState(false)
   const [showAllImages, setShowAllImages] = useState(false)
-  const { success, error } = useToast()
+  const { success, error, confirm } = useToast()
 
   const visibleProjects = showAllProjects ? projects : projects.slice(0, INITIAL_LIMIT)
   const visibleImages = showAllImages ? individualImages : individualImages.slice(0, INITIAL_LIMIT)
 
   const handleDelete = async (type: 'project' | 'image', id: string) => {
-    if (!confirm(`Delete this ${type}?`)) return
+    if (!(await confirm(`Delete this ${type}?`))) return
 
     const endpoint = type === 'project' ? `/api/admin/projects/${id}` : `/api/admin/media/${id}`
     const res = await fetch(endpoint, { method: 'DELETE' })

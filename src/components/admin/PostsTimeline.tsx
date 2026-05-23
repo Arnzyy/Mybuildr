@@ -28,7 +28,7 @@ export default function PostsTimeline({ initialPosts }: PostsTimelineProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const statusFilter = searchParams.get('status') || 'pending'
-  const { success, error } = useToast()
+  const { success, error, confirm } = useToast()
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editCaption, setEditCaption] = useState('')
@@ -43,7 +43,7 @@ export default function PostsTimeline({ initialPosts }: PostsTimelineProps) {
   }, [initialPosts, statusFilter])
 
   const handleCancel = async (id: string) => {
-    if (!confirm('Delete this scheduled post?')) return
+    if (!(await confirm('Delete this scheduled post?'))) return
 
     try {
       const res = await fetch(`/api/admin/posts/${id}`, {
