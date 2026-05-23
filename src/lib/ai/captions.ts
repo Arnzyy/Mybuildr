@@ -12,6 +12,22 @@ interface GeneratedCaption {
 
 export type Platform = 'instagram' | 'facebook' | 'google'
 
+// Strip markdown code blocks from AI response
+function cleanJsonResponse(text: string): string {
+  let cleaned = text.trim()
+  // Remove ```json or ``` at start
+  if (cleaned.startsWith('```json')) {
+    cleaned = cleaned.slice(7)
+  } else if (cleaned.startsWith('```')) {
+    cleaned = cleaned.slice(3)
+  }
+  // Remove ``` at end
+  if (cleaned.endsWith('```')) {
+    cleaned = cleaned.slice(0, -3)
+  }
+  return cleaned.trim()
+}
+
 // Generate a default sign-off from company data
 function generateDefaultSignoff(company: Company, platform: Platform): string {
   const parts: string[] = []
@@ -141,8 +157,8 @@ Only respond with the JSON, nothing else.`
       ? response.content[0].text
       : ''
 
-    // Parse JSON response
-    const parsed = JSON.parse(text)
+    // Parse JSON response (strip markdown code blocks if present)
+    const parsed = JSON.parse(cleanJsonResponse(text))
 
     // Get the appropriate sign-off for this platform (only if enabled)
     let signoff = ''
@@ -287,7 +303,7 @@ Only respond with the JSON, nothing else.`
       ? response.content[0].text
       : ''
 
-    const parsed = JSON.parse(text)
+    const parsed = JSON.parse(cleanJsonResponse(text))
 
     // Get sign-off (same logic as regular captions)
     let signoff = ''
